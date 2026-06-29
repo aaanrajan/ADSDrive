@@ -1,0 +1,21 @@
+<div
+    *ngIf="alert"
+
+  class="fixed top-4 right-4 z-50 w-96"
+  
+>
+<sl-alert
+  *ngIf="alert"
+  open
+  closable
+  [variant]="alert.variant"
+  [duration]="alert.duration ?? 5000"
+  (sl-after-hide)="alert = null"
+ [style.background-color]="getBgColor(alert.variant)"
+>
+  <sl-icon slot="icon" [name]="getIcon(alert.variant)"></sl-icon>
+  {{ alert.message }}
+</sl-alert>
+
+
+</div>
