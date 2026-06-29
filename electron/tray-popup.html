@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ADS-Drive Sync Status</title>
+  <style>
+    :root {
+      --bg-color: rgba(255, 255, 255, 0.92);
+      --card-bg: #ffffff;
+      --text-main: #1a252f;
+      --text-muted: #7f8c8d;
+      --border-color: #e2e8f0;
+      --primary: #3b82f6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --hover-bg: rgba(0, 0, 0, 0.04);
+      --scrollbar-thumb: #cbd5e1;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-color: rgba(24, 24, 27, 0.95);
+        --card-bg: #18181b;
+        --text-main: #f4f4f5;
+        --text-muted: #a1a1aa;
+        --border-color: #27272a;
+        --hover-bg: rgba(255, 255, 255, 0.05);
+        --scrollbar-thumb: #3f3f46;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: var(--bg-color);
+      color: var(--text-main);
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      backdrop-filter: blur(20px);
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    /* Header */
+    .header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .username {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+    }
+
+    .email {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .sync-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .status-dot.syncing {
+      background: var(--primary);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.3; }
+      50% { opacity: 1; }
+      100% { opacity: 0.3; }
+    }
+
+    /* Storage section */
+    .storage-box {
+      padding: 12px 16px;
+      background: rgba(0, 0, 0, 0.01);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .storage-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: var(--border-color);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      width: 0%;
+      border-radius: 3px;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* File List */
+    .file-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+
+    /* Custom Scrollbar */
+    .file-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .file-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .file-list::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+      border-radius: 3px;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      gap: 12px;
+      transition: background 0.2s ease;
+      cursor: pointer;
+    }
+
+    .file-item:hover {
+      background: var(--hover-bg);
+    }
+
+    .file-icon {
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .file-details {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+      gap: 1px;
+    }
+
+    .file-name {
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text-main);
+    }
+
+    .file-meta {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .file-status-icon {
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Footer */
+    .footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.01);
+    }
+
+    .footer-btn {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity 0.2s;
+    }
+
+    .footer-btn:hover {
+      opacity: 0.8;
+    }
+
+    .settings-btn {
+      background: none;
+      border: none;
+      color: var(--text-main);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s;
+    }
+
+    .settings-btn:hover {
+      background: var(--hover-bg);
+    }
+
+    /* Dropdown Settings Menu */
+    .dropdown {
+      position: absolute;
+      bottom: 54px;
+      right: 16px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      display: none;
+      flex-direction: column;
+      width: 180px;
+      z-index: 100;
+      padding: 4px;
+      backdrop-filter: blur(10px);
+    }
+
+    .dropdown.show {
+      display: flex;
+    }
+
+    .dropdown-item {
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      background: none;
+      border: none;
+      color: var(--text-main);
+      width: 100%;
+      border-radius: 6px;
+      transition: background-color 0.15s;
+    }
+
+    .dropdown-item:hover {
+      background: var(--hover-bg);
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 4px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="user-info">
+      <span class="username" id="username">ADS-Drive User</span>
+      <span class="email" id="email">checking account...</span>
+      <div class="sync-status">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Checking sync status...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Storage Info -->
+  <div class="storage-box">
+    <div class="storage-label">
+      <span>Cloud Storage</span>
+      <span id="storageText">Calculating size...</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <!-- File List -->
+  <div class="file-list" id="fileList">
+    <!-- Items dynamically injected -->
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <button class="footer-btn" onclick="openFolder()">📂 Open Synced Folder</button>
+    <button class="footer-btn" onclick="openWeb()">🌐 Web Portal</button>
+    <button class="settings-btn" onclick="toggleDropdown()">⚙️</button>
+  </div>
+
+  <!-- Settings Dropdown -->
+  <div class="dropdown" id="settingsDropdown">
+    <button class="dropdown-item" onclick="pauseSync(2)">⏸️ Pause Syncing (2 hrs)</button>
+    <button class="dropdown-item" onclick="pauseSync(8)">⏸️ Pause Syncing (8 hrs)</button>
+    <button class="dropdown-item" onclick="resumeSync()">▶️ Resume Syncing</button>
+    <div class="dropdown-divider"></div>
+    <button class="dropdown-item" onclick="quitApp()">❌ Quit ADS-Drive</button>
+  </div>
+
+  <script>
+    const dropdown = document.getElementById('settingsDropdown');
+
+    function toggleDropdown() {
+      dropdown.classList.toggle('show');
+    }
+
+    // Hide dropdown when clicking anywhere else
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.settings-btn') && !e.target.closest('.dropdown')) {
+        dropdown.classList.remove('show');
+      }
+    });
+
+    async function refreshData() {
+      try {
+        const data = await window.electronAPI.invoke('tray:get-status-details');
+        
+        // Update User Information
+        document.getElementById('username').innerText = data.username || 'User';
+        document.getElementById('email').innerText = data.email || '';
+        
+        // Update Sync Status
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        if (data.isSyncing) {
+          statusDot.className = 'status-dot syncing';
+          statusText.innerText = 'Syncing files...';
+        } else {
+          statusDot.className = 'status-dot';
+          statusText.innerText = 'ADS-Drive is up to date';
+        }
+
+        // Update Storage (Format sizes dynamically)
+        const formattedUsed = formatSize(data.totalSize);
+        // Hardcoded storage quota (1 TB / 1024 GB like OneDrive basic)
+        const totalQuota = 1024 * 1024 * 1024 * 1024; 
+        const percentage = (data.totalSize / totalQuota) * 100;
+        document.getElementById('storageText').innerText = `${formattedUsed} of 1 TB used`;
+        document.getElementById('progressFill').style.width = `${Math.max(1, percentage)}%`;
+
+        // Render File List
+        const listEl = document.getElementById('fileList');
+        listEl.innerHTML = '';
+        
+        if (!data.recentFiles || data.recentFiles.length === 0) {
+          listEl.innerHTML = `<div style="padding: 48px; text-align: center; color: var(--text-muted); font-size: 12px; font-weight: 500;">No recently synced files</div>`;
+          return;
+        }
+
+        data.recentFiles.forEach(file => {
+          const item = document.createElement('div');
+          item.className = 'file-item';
+          
+          let statusIcon = '☁️';
+          if (file.syncStatus === 'AVAILABLE_OFFLINE') {
+            statusIcon = '✅';
+          } else if (file.syncStatus === 'SYNCING') {
+            statusIcon = '🔄';
+          } else if (file.syncStatus === 'SYNC_ERROR') {
+            statusIcon = '⚠️';
+          }
+
+          // Choose icon based on file type/name (simple fallback)
+          let fileTypeIcon = '📄';
+          const ext = file.name.split('.').pop().toLowerCase();
+          if (['png', 'jpg', 'jpeg', 'gif', 'svg'].includes(ext)) {
+            fileTypeIcon = '🖼️';
+          } else if (['mp4', 'mov', 'avi', 'mkv'].includes(ext)) {
+            fileTypeIcon = '🎥';
+          } else if (['mp3', 'wav', 'flac'].includes(ext)) {
+            fileTypeIcon = '🎵';
+          } else if (['pdf', 'doc', 'docx', 'txt', 'rtf'].includes(ext)) {
+            fileTypeIcon = '📝';
+          } else if (['zip', 'tar', 'gz', 'rar'].includes(ext)) {
+            fileTypeIcon = '📦';
+          }
+
+          item.innerHTML = `
+            <span class="file-icon">${fileTypeIcon}</span>
+            <div class="file-details">
+              <span class="file-name" title="${file.name}">${file.name}</span>
+              <span class="file-meta">${formatSize(file.size)} • ${timeAgo(file.modifiedDate)}</span>
+            </div>
+            <span class="file-status-icon">${statusIcon}</span>
+          `;
+          listEl.appendChild(item);
+        });
+      } catch (err) {
+        console.error("Failed to refresh tray popup data:", err);
+      }
+    }
+
+    function formatSize(bytes) {
+      if (!bytes) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    function timeAgo(dateString) {
+      if (!dateString) return 'recently';
+      const date = new Date(dateString);
+      const now = new Date();
+      const seconds = Math.floor((now - date) / 1000);
+      if (seconds < 60) return 'Just now';
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `${minutes}m ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}h ago`;
+      return date.toLocaleDateString();
+    }
+
+    function openFolder() {
+      window.electronAPI.invoke('tray:open-folder');
+    }
+
+    function openWeb() {
+      window.electronAPI.invoke('tray:open-web');
+    }
+
+    function pauseSync(hours) {
+      window.electronAPI.invoke('tray:pause-sync', hours);
+      dropdown.classList.remove('show');
+      refreshData();
+    }
+
+    function resumeSync() {
+      window.electronAPI.invoke('tray:resume-sync');
+      dropdown.classList.remove('show');
+      refreshData();
+    }
+
+    function quitApp() {
+      window.electronAPI.invoke('tray:quit');
+    }
+
+    // Handle incoming events from main process (e.g. fs events, refresh triggers)
+    if (window.electronAPI.onFSEvent) {
+      window.electronAPI.onFSEvent(() => {
+        refreshData();
+      });
+    }
+
+    // Refresh immediately when window shows or receives instruction
+    window.addEventListener('focus', refreshData);
+    
+    // Auto-update every 8 seconds
+    setInterval(refreshData, 8000);
+    refreshData();
+  </script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+module.exports.IPC_CHANNELS = {
+    START_WATCH: 'start-watch',
+    STOP_WATCH: 'stop-watch',
+    LIST_DIR: 'list-dir',
+    RENAME_ITEM: 'rename-item',
+    MANUAL_SYNC: 'manual-sync',
+    FILE_ACTION: 'file-action',
+    SELECT_FOLDER: 'select-folder',
+    LOAD_CONFIG: 'config:load',
+    SAVE_CONFIG: 'config:save',
+    GET_CONFIG_VALUE: 'config:get',
+    SET_CONFIG_VALUE: 'config:set',
+    UPDATE_CONFIG: 'config:update',
+    GET_ALL_FILES: 'get-all-files',
+    GET_CHILDREN: 'get-children',
+    UPDATE_COLOR: 'update-color',
+
+    READ_FILE: 'read-file',
+    WRITE_FILE: 'write-file',
+    CREATE_DIR: 'create-dir',
+    LIST_DIR: 'list-dir',
+    EXISTS: 'exists',
+    JOIN_PATH: 'join-path',
+    HOME_DIR: 'home-dir',
+    STAT: 'stat',
+    SUPPORT_ACTION: 'support-action'
+};
