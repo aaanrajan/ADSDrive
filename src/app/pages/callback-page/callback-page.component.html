@@ -1,0 +1,56 @@
+<div class="min-h-screen flex items-center justify-center bg-gray-100">
+  <div 
+    [ngClass]="{
+      'bg-green-500': type === 'success',
+      'bg-red-500': type === 'error',
+      'bg-blue-500': type === 'loading',
+      'p-8': true,
+      'rounded-2xl': true,
+      'shadow-xl': true,
+      'text-white': true,
+      'flex': true,
+      'flex-col': true,
+      'items-center': true,
+      'space-y-4': true,
+      'w-[320px]': true
+    }"
+  >
+    <!-- Icon -->
+    <div class="text-6xl animate-pulse" *ngIf="type === 'loading'">
+      ⏳
+    </div>
+    <div class="text-6xl" *ngIf="type !== 'loading'">
+      {{ icon }}
+    </div>
+
+    <!-- Title -->
+    <div class="text-2xl font-bold">
+      {{
+        type === 'success'
+          ? 'Success!'
+          : type === 'error'
+          ? 'Failed!'
+          : 'Please wait...'
+      }}
+    </div>
+
+    <!-- Message -->
+    <div class="text-center text-lg opacity-90">
+      {{ message }}
+    </div>
+
+    <!-- Loader -->
+    <div *ngIf="type === 'loading'" class="w-full bg-white/30 rounded-full h-2 overflow-hidden">
+      <div class="bg-white h-2 animate-pulse w-3/4"></div>
+    </div>
+
+    <!-- Button ONLY for error -->
+    <a 
+      *ngIf="type === 'error'"
+      routerLink="/" 
+      class="mt-4 px-5 py-2 bg-white text-gray-800 rounded-lg hover:bg-gray-200 transition"
+    >
+      Go Home
+    </a>
+  </div>
+</div>

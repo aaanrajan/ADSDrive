@@ -1,0 +1,312 @@
+<div class="flex flex-col h-[85vh] sm:p-2">
+  <div class="mb-2">
+    <div class="flex items-center justify-between mb-2">
+      <h4 class="text-sm font-semibold sm:text-xl">Media</h4>
+      <div *ngIf="selectedIds.size > 0" 
+           class="sm:hidden flex items-center gap-2 rounded px-5 py-2 shadow-sm">
+        <span class="text-sm font-semibold sm:text-xl text-gray-600">
+          {{ selectedIds.size }} selected
+        </span>
+        <button (click)="clearSelection()" 
+                class="text-gray-600 hover:text-orange-700 cursor-pointer font-bold"
+                aria-label="Clear selection">
+          ✕
+        </button>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center justify-between w-full">
+        <ng-container *ngIf="selectedIds.size === 0; else selectionToolbar">
+          <div class="flex text-xs sm:text-sm font-medium items-center sm:gap-2">
+            <button (click)="ontabChange('all')" class="px-2 sm:px-6 py-2 cursor-pointer rounded-full transition"
+              [ngClass]="activeTab === 'all' ? 'bg-orange-400 text-white shadow-md'
+            : 'bg-white text-gray-700 hover:bg-gray-100'">
+              All
+            </button>
+            <button (click)="ontabChange('photos')" class="px-2 sm:px-6 py-2 cursor-pointer rounded-full  transition"
+              [ngClass]="activeTab === 'photos' ? 'bg-orange-400 text-white shadow-md'
+            : 'bg-white text-gray-700 hover:bg-gray-100'">
+              Photos
+            </button>
+            <button (click)="ontabChange('videos')" class="px-2 sm:px-6 py-2 cursor-pointer rounded-full transition"
+              [ngClass]="activeTab === 'videos' ? 'bg-orange-400 text-white shadow-md'
+            : 'bg-white text-gray-700 hover:bg-gray-100'">
+              Videos
+            </button>
+          </div>
+
+          <!-- RIGHT: View Dropdown + Slider -->
+          <div class="flex items-center  sm:gap-6 justify-end relative">
+            <div class="relative dropdown-wrapper" (click)="$event.stopPropagation()">
+              <button (click)="toggleDropdown()" class="p-2 cursor-pointer hover:bg-gray-100 rounded-lg transition">
+                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  stroke-width="1.5">
+                  <rect x="3" y="3" width="7" height="7" rx="1" />
+                  <rect x="14" y="3" width="7" height="7" rx="1" />
+                  <rect x="3" y="14" width="7" height="7" rx="1" />
+                  <rect x="14" y="14" width="7" height="7" rx="1" />
+                </svg>
+              </button>
+
+              <!-- Dropdown Menu -->
+              <div *ngIf="showDropdown"
+                class="absolute right-0 top-full mt-2 w-40 sm:w-56 bg-white border border-gray-200 rounded-xl shadow-xl z-10">
+                <div class="py-3 text-xs sm:text-sm font-medium">
+                  <div class="px-5 py-1 text-gray-400 tracking-wide">View as</div>
+
+                  <button (click)="selectGroupBy('days')"
+                    class="w-full text-left px-5 py-1 hover:bg-gray-50 flex items-center justify-between transition"
+                    [ngClass]="groupBy === 'days' ? 'text-gray-800' : 'text-gray-600'">
+                    Days
+                    <svg *ngIf="groupBy === 'days'" class="w-5 h-5 text-orange-400" fill="currentColor"
+                      viewBox="0 0 20 20">
+                      <path fill-rule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clip-rule="evenodd" />
+                    </svg>
+                  </button>
+
+                  <button (click)="selectGroupBy('months')"
+                    class="w-full text-left px-5 py-2 hover:bg-gray-50 flex items-center justify-between transition"
+                    [ngClass]="groupBy === 'months' ? 'text-gray-800' : 'text-gray-600'">
+                    Months
+                    <svg *ngIf="groupBy === 'months'" class="w-5 h-5 text-orange-400" fill="currentColor"
+                      viewBox="0 0 20 20">
+                      <path fill-rule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <button (click)="selectGroupBy('years')"
+                    class="w-full text-left px-5 py-1 text-base cursor-pointer hover:bg-gray-50 flex items-center justify-between transition"
+                    [ngClass]="groupBy === 'years' ? 'text-gray-800' : 'text-gray-600'">
+                    Years
+                    <svg *ngIf="groupBy === 'years'" class="w-5 h-5 text-orange-400" fill="currentColor"
+                      viewBox="0 0 20 20">
+                      <path fill-rule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <div class="h-px bg-gray-200 my-3 mx-4"></div> <button (click)="selectGroupBy('Show file names')"
+                    class="w-full text-left px-5 py-1 text-base cursor-pointer hover:bg-gray-50 flex items-center justify-between transition"
+                    [ngClass]=" groupBy === 'Show file names' ? 'text-gray-800' : 'text-gray-600' ">
+                    Show file names <svg *ngIf="groupBy === 'Show file names'" class="w-5 h-5 text-orange-400"
+                      fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="w-px h-6 bg-gray-300"></div>
+            <!-- Thumbnail Size Slider -->
+            <div class="flex items-center gap-3">
+              <button (click)="decreaseSize()" class="p-1.5 hover:bg-gray-100 rounded-lg transition">
+                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="8" y1="12" x2="16" y2="12" />
+                </svg>
+              </button>
+
+              <input type="range" min="{{min}}" max="{{max}}" [(ngModel)]="thumbnailSize" (input)="updateTrack($event)"
+                class="custom-slider w-40 rounded cursor-pointer" />
+
+              <button (click)="increaseSize()" class="p-1.5 hover:bg-gray-100 rounded-lg transition">
+                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="16" />
+                  <line x1="8" y1="12" x2="16" y2="12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </ng-container>
+
+        <!--  When files selected -->
+        <ng-template #selectionToolbar>
+          <div
+            class="hidden sm:flex items-center justify-between w-full bg-white border border-gray-200 rounded-md px-4 py-2 shadow-sm">
+            <!-- Left section: action buttons -->
+            <div class="flex items-center gap-4 flex-wrap">
+              <button class="cursor-pointer text-sm flex items-center gap-2 font-poppins text-[14px]"
+                (click)="share(null)">
+                <i class="fas fa-share-alt text-[#494847]"></i> Share
+              </button>
+
+              <button class="cursor-pointer text-sm flex items-center gap-2 font-poppins text-[14px]"
+                (click)="downloadFile(null)">
+                <i class="fas fa-download text-[#494847]"></i> Download
+              </button>
+
+              <button class="cursor-pointer text-sm flex items-center gap-2 font-poppins text-[14px]"
+                (click)="openCopyDialog(null)">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                  stroke="currentColor" class="size-6 text-[#494847]">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M16.5 8.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v8.25A2.25 2.25 0 0 0 6 16.5h2.25m8.25-8.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-7.5A2.25 2.25 0 0 1 8.25 18v-1.5m8.25-8.25h-6a2.25 2.25 0 0 0-2.25 2.25v6" />
+                </svg>
+                Copy
+              </button>
+
+              <button class="cursor-pointer text-sm flex items-center gap-2 font-poppins text-[14px]"
+                (click)="delete()">
+                <i class="fas fa-trash-alt text-[#494847]"></i> Delete
+              </button>
+            </div>
+
+            <!-- Right section: selection info -->
+            <div class="flex items-center gap-2">
+              <span class="font-poppins text-[14px] text-[#494847] border border-[#E1E1E1] px-2 py-[2px] rounded">
+                {{ selectedIds.size }} selected
+              </span>
+              <button (click)="clearSelection()" class="font-bold text-[1rem] text-[#313132] cursor-pointer">
+                ✕
+              </button>
+            </div>
+          </div>
+
+        </ng-template>
+      </div>
+
+      <!-- File Preview Modal -->
+      <div *ngIf="isModalOpen"
+        class="fixed inset-0 bg-opacity-30 bg-black/30 backdrop-blur-sm shadow-lg flex items-center justify-center z-50"
+        [ngStyle]="{'backdrop-filter': 'blur(6px)'}">
+        <app-file-preview [selectedFile]="selectedFile" [showClose]="true" (close)="closeModal()"></app-file-preview>
+      </div>
+    </div>
+  </div>
+  <ng-container *ngIf="isFolderLoading">
+    <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 p-4 animate-fade-in">
+      <div *ngFor="let i of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]"
+        class="w-full aspect-square animate-pulse-skeleton"></div>
+    </div>
+  </ng-container>
+
+  <!--  Added scrollable container -->
+  <div *ngIf="!isFolderLoading" #scrollContainer
+    class="flex-1 bg-white rounded-md border border-gray-200 shadow-sm p-4 overflow-y-auto" style="max-height: 75vh;"
+    [style.padding-bottom]="selectedIds.size > 0 ? '80px' : '16px'"
+    (scroll)="onScroll($event)">
+
+      <div *ngIf="groupedFiles.length === 0" class="flex flex-col items-center justify-center h-full py-20">
+        <div class="text-gray-400 mb-4">
+          <svg class="w-24 h-24 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-600 mb-2">No Media Found</h3>
+        <p class="text-gray-500 text-center max-w-md">
+          {{ activeTab === 'all' ? 'No images or videos found.' :
+          activeTab === 'photos' ? 'No photos found.' :
+          'No videos found.' }}
+        </p>
+      </div>
+      
+    <div *ngFor="let group of groupedFiles" class="mb-6  sm:mb-10">
+      <h2 class="text-base font-semibold text-gray-700 mb-4">{{ group.date }}</h2>
+
+      <div class="grid gap-4" [style.grid-template-columns]="
+    'repeat(auto-fill, minmax(' + (thumbnailSize + 15) + 'px, 1fr))'">
+        <ng-container *ngFor="let node of group.items">
+          <div
+            class="relative rounded-xl bg-white border-2 border-gray-200 overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all"
+            (dblclick)="!isMobile() && onDoubleClick($event, node)"
+            (click)="onSingleClick($event, node)">
+            <!-- Selection Circle -->
+            <div class="absolute top-3 right-3 z-10">
+              <div class="h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all" [ngClass]="
+            isSelected(node)
+              ? 'border-orange-500 bg-orange-500 opacity-100'
+              : 'border-black bg-white opacity-0 group-hover:opacity-100'
+          " (click)="$event.stopPropagation(); toggleSelected(node)">
+                <svg *ngIf="isSelected(node)" class="h-3 w-3 text-white" fill="none" stroke="currentColor"
+                  stroke-width="3" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+
+            <!-- MOBILE BOTTOM ACTION BAR -->
+          <div *ngIf="selectedIds.size > 0"
+            class="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 shadow-lg z-40 safe-area-inset-bottom">
+            <div class="flex items-center justify-around max-w-md mx-auto">
+              <button class="flex flex-col items-center gap-1 cursor-pointer" (click)="share(null)">
+                <i class="fas fa-share-alt text-gray-700 text-lg"></i>
+                <span class="text-xs text-gray-600">Share</span>
+              </button>
+          
+              <button class="flex flex-col items-center gap-1 cursor-pointer" (click)="downloadFile(null)">
+                <i class="fas fa-download text-gray-700 text-lg"></i>
+                <span class="text-xs text-gray-600">Download</span>
+              </button>
+          
+              <button class="flex flex-col items-center gap-1 cursor-pointer" (click)="openCopyDialog(null)">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                  class="w-6 h-6 text-gray-700">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M16.5 8.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v8.25A2.25 2.25 0 0 0 6 16.5h2.25m8.25-8.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-7.5A2.25 2.25 0 0 1 8.25 18v-1.5m8.25-8.25h-6a2.25 2.25 0 0 0-2.25 2.25v6" />
+                </svg>
+                <span class="text-xs text-gray-600">Copy</span>
+              </button>
+          
+              <button class="flex flex-col items-center gap-1 cursor-pointer" (click)="delete()">
+                <i class="fas fa-trash-alt text-gray-700 text-lg"></i>
+                <span class="text-xs text-gray-600">Delete</span>
+              </button>             
+            </div>        
+          </div>
+
+            <!-- Media Content -->
+            <div class="p-3">
+              <div class="relative rounded-lg overflow-hidden aspect-square w-full">
+                <img [src]="node.type == 'img' ? node.thumbnailUrl : node.url" (error)="onImageError($event, node)"
+                  class="absolute inset-0 w-full h-full object-cover transition-opacity duration-200" loading="lazy" />
+
+                <div *ngIf="node.thumbnailFailed"
+                  class="absolute inset-0 flex items-center justify-center bg-gray-50 text-gray-400">
+                  <i class="fas fa-file-alt text-4xl"></i>
+                </div>
+
+                <div
+                  class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition duration-300">
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+
+      <div class="fixed inset-0 flex h-full items-center justify-center z-50"
+        style="background-color: rgb(143 134 134 / 36%);" *ngIf="shareDialog">
+        <app-file-share-model [sharedItemList]="sharedItemList" (closeModel)="shareClose()" [action]="shareAction"
+          [sharedDetails]="sharedDetails"></app-file-share-model>
+      </div>      
+      <div *ngIf="copyDialogOpen" class="fixed inset-0 bg-black/10 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="relative bg-white rounded-lg shadow-xl w-full max-w-xl max-h-[90vh] overflow-hidden p-4">
+      
+          <!-- Close Button -->
+          <button (click)="closeBothDialogs()" class="absolute top-3 right-3 rounded-full cursor-pointer"
+            aria-label="Close dialog">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+              class="w-6 h-6 text-orange-500 hover:text-orange-600">
+              <path fill-rule="evenodd"
+                d="M6.225 4.811a1.5 1.5 0 0 1 2.121 0L12 8.464l3.654-3.653a1.5 1.5 0 1 1 2.122 2.122L14.121 10.586l3.654 3.653a1.5 1.5 0 1 1-2.122 2.122L12 12.707l-3.654 3.654a1.5 1.5 0 0 1-2.121-2.122l3.653-3.653-3.653-3.654a1.5 1.5 0 0 1 0-2.121Z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+      
+          <!-- Move Component -->
+          <app-move [mode]="copyDialogOpen ? 'copy' : 'move'" [selectedNodeIds]="getSelectedNodeIdsArray()"
+            [moveSourceNode]="moveSourceNode" (cancelClicked)="closeBothDialogs()"></app-move>
+        </div>
+      </div>
+    </div>

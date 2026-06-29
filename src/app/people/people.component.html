@@ -1,0 +1,109 @@
+<div class="p-2  flex flex-col h-[85vh] ">
+  <h2 class="font-medium mb-4  text-[#000000]">People</h2>
+  
+  <div *ngIf="loading" class="bg-white rounded-xl shadow-sm p-6 border border-[#E2E2E2] ml-0 sm:-ml-4">
+    <div class="space-y-4 animate-pulse">
+  
+      <div *ngFor="let item of skeletonItems"
+  class="flex items-center justify-between gap-4 p-4 rounded-lg border-gray-100 flex-wrap">
+
+  
+        <!-- Left Block -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-gray-200 rounded-full"></div>
+  
+          <div class="flex flex-col gap-2">
+            <div class="h-4 w-32 bg-gray-200 rounded"></div>
+            <div class="h-3 w-20 bg-gray-100 rounded"></div>
+          </div>
+        </div>
+  
+        <!-- Right Blocks -->
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-24 bg-gray-200 rounded-lg shrink"></div>
+          <div class="h-10 w-24 bg-gray-200 rounded-lg shrink"></div>
+          <div class="h-10 w-10 bg-gray-200 rounded-lg shrink"></div>
+        </div>
+  
+      </div>
+  
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="!loading && errorMessage"
+    class="bg-white rounded shadow-sm p-6 -ml-4 border border-[#E2E2E2] flex-1 overflow-y-auto flex items-center justify-center">
+    <div class="text-center text-gray-500">
+      <span class="material-icons text-4xl mb-2 text-gray-400">error_outline</span>
+      <p>{{ errorMessage }}</p>
+    </div>
+  </div>
+  <!-- People List -->
+  <div class="bg-white sm:rounded sm:shadow-sm sm:p-4 sm:border sm:border-[#E2E2E2] flex-1 overflow-y-auto">
+    <div *ngFor="let person of people"
+      class="grid sm:grid-cols-[185px_1fr] items-center py-2 sm:py-4 hover:bg-gray-50 transition">
+      <!-- Avatar + Name -->
+      <!-- Avatar + Name -->
+  <div class="flex justify-between items-center gap-2"  (click)="goAllPeople(person)">
+
+    <div class="flex items-center gap-2">
+      <div
+        class="w-8 h-8 flex items-center justify-center rounded-full border-2 border-white text-white font-semibold"
+        [ngClass]="getColor(person)"
+        [title]="person.name">
+        {{ person.name.charAt(0) | uppercase }}
+      </div>
+
+      <span class="font-semibold text-[#494847] truncate cursor-pointer"
+       >
+        {{ person.name }}
+      </span>
+    </div>
+<span class="sm:hidden block ">
+
+  <i class="fas fa-chevron-right text-gray-400"></i>
+</span>
+  </div>
+
+<!-- </div> -->
+
+      <!-- File badges (ONE ROW + +COUNT) -->
+      <div #fileRow class="flex items-center gap-2 overflow-hidden hidden sm:flex">
+        <div *ngFor="let file of person.visibleFiles"
+          class="file-badge flex items-center gap-1  px-3 ml-2 h-12 rounded-lg text-sm border  text-[#494847] border-[#E2E2E2] shrink-0 cursor-pointer">
+          <div class="hidden sm:flex items-center gap-2 truncate">
+            <!-- Folder Icon -->
+            <ng-container *ngIf="file.isFolder">
+              <svg class="w-10 h-10 mx-auto" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M100 30.0007H55.0003L45.0003 20.0007H20.0002C14.5002 20.0007 10.0002 24.5007 10.0002 30.0007V50.0007H110V40.0007C110 34.5007 105.5 30.0007 100 30.0007Z"
+                  [attr.fill]="file.darkenColor || '#FFA000'" />
+                <path
+                  d="M100 30H20.0002C14.5002 30 10.0002 34.5 10.0002 40V90C10.0002 95.5 14.5002 100 20.0002 100H100C105.5 100 110 95.5 110 90V40C110 34.5 105.5 30 100 30Z"
+                  [attr.fill]="file.color || '#FFCA28'" />
+              </svg>
+            </ng-container>
+
+            <!-- File Icon -->
+            <ng-container *ngIf="!file.isFolder">
+              <img [src]="'assets/icons/' + getIconForNode(file)" class="w-6 h-6 shrink-0" />
+            </ng-container>
+
+            <span class="text-[12px]  text-[#494847]  text-center mt-1 overflow-hidden max-w-[120px] truncate">
+              {{ file.itemName }}
+            </span>
+
+
+          </div>
+        </div>
+
+        <!-- +Count -->
+        <span *ngIf="person.extraCount > 0"
+          class="cursor-pointer text-sm  w-[53px] rounded-lg  text-[#494847] border border-[#E2E2E2] shrink-0 h-12 flex items-center justify-center"
+          (click)="goAllPeople(person)">
+          +{{ person.extraCount }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>

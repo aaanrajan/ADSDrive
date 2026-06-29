@@ -1,0 +1,98 @@
+<div class="min-h-screen bg-gray-50 flex flex-col">
+
+  <!-- HEADER -->
+  <header class="w-full bg-white shadow-md px-4 py-3 flex items-center justify-between md:justify-start gap-4">
+
+    <!-- Logo + App Name -->
+    <div class="flex items-center gap-3">
+      <img src="assets/logo.png" alt="Ads-Drive Logo" class="w-10 h-10">
+      <h1 class="text-2xl font-bold text-orange-600 tracking-wide hidden sm:block">
+        Ads-Drive
+      </h1>
+    </div>
+
+    <!-- RIGHT SIDE: USER LOGIN / AVATAR -->
+    <div class="ml-auto flex items-center gap-4">
+
+      <!-- Logged in -->
+      <div *ngIf="isLoggedIn; else loginButton"
+           class="flex bg-orange-400 px-3 py-2 rounded-full shadow items-center gap-2 border border-white">
+
+        <div
+          class="w-10 h-10 flex items-center justify-center cursor-pointer rounded-full border-2 border-white text-white font-semibold"
+          [ngClass]="getColor(user)"
+          [title]="user.fullName">
+          {{ getInitial(user) }}
+        </div>
+
+        <div class="hidden sm:flex flex-col text-left min-w-0 max-w-[220px]">
+          <span class="truncate text-sm font-medium text-white block" title="{{ user.fullName }}">
+            {{ user.fullName }}
+          </span>
+          <span class="truncate text-xs text-gray-50 block" title="{{ user.email }}">
+            {{ user.email }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Not logged in -->
+      <ng-template #loginButton>
+        <button
+          (click)="navigateToLogin()"
+          class="bg-orange-500 font-semibold text-white px-4 py-2 rounded-full hover:bg-orange-600 text-sm">
+          Login
+        </button>
+      </ng-template>
+
+      <!-- Mobile Toggle -->
+      <button class="md:hidden text-3xl text-orange-600" (click)="isOpen = !isOpen">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN WRAPPER -->
+  <div class="flex flex-1 relative">
+
+ <!-- SIDEBAR -->
+<aside
+  class="bg-white w-64 p-4 shadow-md fixed inset-y-0 left-0 z-20 transform transition-transform duration-300
+         md:translate-x-0 md:static md:block"
+  [class.translate-x-0]="isOpen"       
+  [class.-translate-x-full]="!isOpen"> <!-- Only affects mobile -->
+  
+  <nav class="flex flex-col gap-2">
+    <a routerLink="/policies/terms"
+       routerLinkActive="bg-orange-100 text-orange-700"
+       class="p-2 rounded hover:bg-gray-100">Terms of Service</a>
+
+    <a routerLink="/policies/privacy"
+       routerLinkActive="bg-orange-100 text-orange-700"
+       class="p-2 rounded hover:bg-gray-100">Privacy Policy</a>
+
+    <a routerLink="/policies/cookies"
+       routerLinkActive="bg-orange-100 text-orange-700"
+       class="p-2 rounded hover:bg-gray-100">Cookie Policy</a>
+
+    <a routerLink="/policies/data-protection"
+       routerLinkActive="bg-orange-100 text-orange-700"
+       class="p-2 rounded hover:bg-gray-100">Data Protection / DPA</a>
+
+    <!-- <a routerLink="/policies/domain-terms"
+       routerLinkActive="bg-orange-100 text-orange-700"
+       class="p-2 rounded hover:bg-gray-100">Domain Terms</a>
+
+    <a routerLink="/policies/partner-program"
+       routerLinkActive="bg-orange-100 text-orange-700"
+       class="p-2 rounded hover:bg-gray-100">Partner / Affiliate Terms</a> -->
+  </nav>
+</aside>
+
+
+    <!-- PAGE CONTENT -->
+    <main class="flex-1 ml-0 p-4">
+      <router-outlet></router-outlet>
+    </main>
+
+  </div>
+</div>

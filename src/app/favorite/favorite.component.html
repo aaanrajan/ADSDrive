@@ -1,0 +1,28 @@
+
+ <div class="flex flex-col h-[85vh] overflow-y-auto">
+  <app-page-header
+   title="Favorites" subtitle="Display all the files are uploaded into cloud"
+    [breadcrums]="breadcrums"
+    (breadcrumbClicked)="onFolderClick($event)">
+  </app-page-header> 
+
+  <div class="relative flex-1 overflow-y-auto bg-white h-full">
+    <!-- Always show file-view to ensure drag/upload logic works -->
+    <app-file-view 
+      [nodes]="filteredFolders" 
+      [loading]="isLoading"
+      [page]="'FAVORITE'"
+      [parentId]="getCurrentFolderId()"
+      (folderDeleted)="onFolderDeleted($event)"
+      (folderRenamed)="onFolderRenamed($event)"
+      (folderClicked)="onFolderClick($event)"
+      (favoriteToggled)="onFavoriteToggled($event)">
+    </app-file-view>
+
+    <!-- Show "no folders found" inside scrollable view -->
+     <div *ngIf="filteredFolders.length === 0 && searchQuery"
+       class="absolute inset-0 flex items-center justify-center text-gray-500 text-sm italic pointer-events-none">
+    📁 No folders found matching "<strong>{{ searchQuery }}</strong>"
+  </div>
+  </div>
+</div>
