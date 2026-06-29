@@ -1,0 +1,36 @@
+.profile-dropdown {
+  width: 16rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  border: 1px solid #e5e7eb;
+}
+.profile-dropdown button:hover {
+  background-color: #fff7ed;
+}
+
+.openDrive {
+  background-color: white;
+  position: absolute;
+  z-index: 99999;
+  right: 1px;
+  top: 32px;
+  border-radius: 5px;
+  box-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;   
+  margin-top: 10px;
+  margin-right: 14px;
+}
+
+.openDrive-imag img{
+    border-radius: 5px;
+    border: 1px solid #94949470;
+}
+
+.openDrive-imag  {
+  width: 40px ;
+  width: 50px;
+  margin: 2px;
+}
