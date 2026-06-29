@@ -1,0 +1,80 @@
+<ng-container *ngIf="tasks.length > 0 && !hidePanel">
+  <div
+    *ngIf="!hidePanel" (mouseenter)="hoveringPanel = true; clearAutoCloseTimer()" (mouseleave)="hoveringPanel = false; startAutoCloseTimer()"
+    class="fixed bottom-6 right-6 w-[360px] bg-white border border-gray-200 rounded-2xl shadow-lg p-4 max-h-[420px] overflow-y-auto"
+  >
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-4">
+      <div class="text-base font-semibold text-gray-800 flex items-center space-x-2">
+        <span class="text-blue-600">📤</span>
+        <span>Upload Status</span>
+      </div>
+      <button
+        *ngIf="isAllUploadsFinalized(tasks)"
+        (click)="hideProgressPanel()"
+        class="text-xl text-gray-400 hover:text-gray-700 font-bold cursor-pointer"
+        title="Close"
+      >
+        &times;
+      </button>
+    </div>
+
+    <!-- In Progress -->
+    <ng-container *ngFor="let task of groupByStatus(tasks, 'inProgress')">
+      <div class="mb-4 p-3 rounded-lg bg-gray-50 border border-gray-100">
+        <div class="flex justify-between items-center mb-1">
+          <span class="truncate text-sm font-medium text-gray-800" title="{{ task.fileName }}">
+            {{ task.fileName }}
+          </span>
+          <div class="flex items-center space-x-2">
+            <button class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 cursor-pointer" (click)="togglePause(task)">
+              {{ pauseMap.get(task.id) ? 'Resume' : 'Pause' }}
+            </button>
+            <button class="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 cursor-pointer" (click)="cancelTask(task)">
+              Cancel
+            </button>
+          </div>
+        </div>
+        <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div class="bg-blue-600 h-full rounded-full transition-all duration-300" [style.width.%]="task.progress"></div>
+        </div>
+        <div class="text-right text-xs text-gray-500 mt-1">{{ task.progress }}%</div>
+      </div>
+    </ng-container>
+
+    <!-- Failed -->
+    <ng-container *ngFor="let task of groupByStatus(tasks, 'error')">
+      <div class="mb-3 p-3 rounded-lg bg-red-50 border border-red-200">
+        <div class="flex justify-between items-center text-sm">
+          <span class="truncate font-medium text-red-700" title="{{ task.fileName }}">{{ task.fileName }}</span>
+          <button class="text-xs text-yellow-600 hover:underline cursor-pointer" (click)="retryTask(task)">Retry</button>
+        </div>
+  
+      </div>
+    </ng-container>
+
+    <!-- Cancelled -->
+    <ng-container *ngFor="let task of groupByStatus(tasks, 'cancelled')">
+      <div class="mb-3 p-3 rounded-lg bg-yellow-50 border border-yellow-200">
+        <div class="flex justify-between items-center text-sm">
+          <span class="truncate font-medium text-yellow-700" title="{{ task.fileName }}">{{ task.fileName }}</span>
+        </div>
+        <div class="text-right text-xs text-yellow-600 mt-1">⚠️ Cancelled</div>
+      </div>
+    </ng-container>
+
+    <!-- Accordion: Completed -->
+    <div *ngIf="groupByStatus(tasks, 'done').length">
+      <div
+        class="cursor-pointer font-semibold text-green-700 text-sm mt-4 mb-2 flex justify-between items-center"
+        (click)="toggleSection('done')"
+      >
+        Completed ({{ groupByStatus(tasks, 'done').length }})
+        <span>{{ expandedSection === 'done' ? '▾' : '▸' }}</span>
+      </div>
+      <div *ngIf="expandedSection === 'done'" class="pl-2 text-xs text-green-700 space-y-1">
+        <div *ngFor="let task of groupByStatus(tasks, 'done')" class="truncate">{{ task.fileName }}</div>
+      </div>
+    </div>
+  </div>
+</ng-container>

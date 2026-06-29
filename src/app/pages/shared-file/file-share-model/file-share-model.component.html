@@ -1,0 +1,714 @@
+<!-- Inside app-share-item-model.component.html -->
+  <div *ngIf="showAlertPopup">
+    <app-confirmation-model [title]="modelTitle" [message]="modelMessage" [actionBtn]="actionBtnText"
+      [revertBtnText]="revertBtnText" (isConfirmed)="confirmModelResponce($event)"></app-confirmation-model>
+  </div>
+<div class="bg-white sm:rounded-xl  h-full sm:h-auto shadow-lg p-2 sm:p-6 relative">
+  <!-- Close button -->
+  <!-- Dialog Header -->
+  <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center space-x-4">
+      <!-- Arrow button -->
+      <button *ngIf="['GRANT_ACCESS', 'SHARE', 'MANAGE_PEOPLE_ACCESS'].includes(action) "
+        (click)="action = 'LINK_ACCESS'; isDropdownOpen = false"
+        class="text-gray-600 m-1 cursor-pointer hover:text-gray-600">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+
+      <!-- Text block -->
+      <div class="pl-1">
+        <h2 class="text-[15px] font-medium"> {{ action === 'SHARE' ? 'Share this file' : action === 'LINK_ACCESS' ?
+          'Review & Grant Access' : action === 'GRANT_ACCESS' ? 'Grant Access' : 'Manage Access' }}</h2>
+        <p *ngIf="selectedItem && !['MANAGE_ACCESS', 'MANAGE_PEOPLE_ACCESS'].includes(action)"
+          class="text-xs text-gray-400" title="{{ selectedItem.itemName }}">
+          {{ (selectedItem.itemName || '').length > 60 ? (selectedItem.itemName?.slice(0, 57) + '...') :
+          selectedItem.itemName }}
+
+        </p>
+      </div>
+    </div>
+
+    <div class="flex gap-2">
+      <!-- Close button using Font Awesome -->
+      <button (click)="closeDialog()" class="text-gray-600 cursor-pointer hover:text-gray-600">
+        <i class="fas fa-times"></i>
+      </button>
+
+    </div>
+  </div>
+
+  <div class="sm:w-120 h-auto">
+
+    <form *ngIf="['GRANT_ACCESS', 'SHARE'].includes(action)" [formGroup]="shareForm"
+      class="space-y-2 text-sm text-gray-800">
+
+      <div class="mb-3">
+        <div class="relative">
+
+          <div class="flex flex-wrap items-center gap-2 rounded min-h-[3rem] bg-white p-1
+             border border-gray-300 focus-within:border-orange-400 focus-within:ring-1 focus-within:ring-orange-300"
+            style="border-radius: 8px; border-bottom: 2px solid orange; " [ngClass]="{
+        'border-red-500':
+          shareForm.controls['to'].invalid && shareForm.controls['to'].touched
+      }">
+
+            <!-- Chips list -->
+            <ng-container *ngFor="let email of emails; let i = index">
+              <div class="flex items-center text-sm bg-orange-100 px-2 py-1 rounded-full">
+                <span *ngIf="editedIndex !== i" (dblclick)="editEmail(i)" class="cursor-pointer">{{ email }}</span>
+                <input *ngIf="editedIndex === i" [(ngModel)]="editValue" [ngModelOptions]="{ standalone: true }"
+                  (keydown.enter)="saveEditedEmail(i)" (blur)="saveEditedEmail(i)"
+                  class="text-sm border-none outline-none bg-transparent" autofocus />
+                <button type="button" (click)="removeEmail(i)" class="ml-1 hover:text-red-600 font-bold">
+                  &times;
+                </button>
+              </div>
+            </ng-container>
+
+            <!-- Input always at the end -->
+            <input type="text" [(ngModel)]="emailInput" [ngModelOptions]="{ standalone: true }"
+              (keydown)="onKeyDown($event);onSearchChange($event)" (blur)="addEmailFromInput()"
+              (paste)="handlePaste($event)" placeholder="Enter email(s) and press Enter or Space"
+              class="flex-1 border-none outline-none m-1 text-sm min-w-[150px] bg-transparent" />
+
+
+          </div>
+          <div *ngIf="suggestedUsers.length > 0"
+            class="absolute z-20 w-full bg-white border border-gray-200 rounded-xl mt-1 shadow-xl overflow-hidden">
+
+            <div class="max-h-64 overflow-y-auto divide-y divide-gray-100">
+              <div *ngFor="let user of suggestedUsers" (click)="addSuggestion(user)"
+                class="flex items-center justify-between px-4 py-2 cursor-pointer transition-colors duration-150 hover:bg-orange-50">
+
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 flex items-center justify-center rounded-full font-semibold text-white"
+                    [ngClass]="getColor(user)">
+                    {{ getInitial(user) }}
+                  </div>
+
+                  <div>
+                    <p class="text-sm font-medium text-gray-800 truncate max-w-[160px]"
+                      title="{{ getDisplayName(user) }}">
+                      {{ getDisplayName(user) }}
+                    </p>
+                    <p class="text-xs text-gray-500 truncate max-w-[180px]" title="{{ user.email }}">
+                      {{ user.email }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Validation error -->
+        <p *ngIf="
+        shareForm.controls['to'].invalid && shareForm.controls['to'].touched
+      " class="text-red-500 text-sm mt-1">
+          {{ "AT_LEAST_ONE_VALID_EMAIL" }}
+        </p>
+      </div>
+
+      <!-- Description -->
+      <sl-textarea placeholder="Add a message" class="orange-input" formControlName="description">
+      </sl-textarea>
+
+      <div class="flex justify-between items-center pt-4 relative">
+        <p class="text-gray-500 font-medium">Manage access</p>
+
+        <div class="relative">
+          <!-- Label acting as dropdown toggle -->
+          <button (click)="toggleDropdown()"
+            class="border cursor-pointer border-gray-300 rounded-md px-2 py-1 flex items-center focus:outline-none">
+            {{ getAccessLabel(selectedAccess) }}
+            <i class="fas fa-chevron-down ml-2"></i>
+          </button>
+
+          <!-- Dropdown menu -->
+          <ul *ngIf="isDropdownOpen" #dropDownMenu
+            class="absolute cursor-pointer right-0 mt-2 w-40 p-1 bg-white border border-gray-300  rounded-md shadow-lg z-10">
+            <li *ngFor="let option of accessOptions" (click)="selectAccess(option.value)"
+              class="flex items-center justify-between px-2 py-1 font-medium text-[11px] cursor-pointer" [ngClass]="{
+      'bg-orange-400 rounded-md text-white': option.value === selectedAccess,
+      'hover:bg-gray-100': option.value !== selectedAccess
+    }">
+              <span>{{ option.label }}</span>
+              <span *ngIf="option.value === selectedAccess" class="text-sm">
+                <i class="fas fa-check"></i>
+              </span>
+            </li>
+
+          </ul>
+        </div>
+      </div>
+
+
+      <div class="mt-8 pt-4">
+        <ng-container *ngIf="action === 'SHARE' && shareUserPermissions && shareUserPermissions.length">
+          <p class="text-gray-600"> Shared with </p>
+          <div class="flex my-2 -space-x-4">
+            <ng-container *ngFor="let user of shareUserPermissions">
+              <div (click)="selectedManageAccess(user)"
+                class="w-10 h-10 cursor-pointer flex items-center justify-center rounded-full border-2 border-white text-white font-semibold"
+                [ngClass]="getColor(user)">
+                {{ getInitial(user) }}
+              </div>
+            </ng-container>
+          </div>
+
+        </ng-container>
+
+
+      </div>
+
+
+      <div class="flex justify-between items-center pt-1">
+        <div>
+          <p *ngIf="action === 'SHARE'" class="text-orange-400  underline">{{ linkLable[linkAccess]}} {{
+            getAccessLabel(selectedAccess) | lowercase
+            }}.
+          </p>
+
+        </div>
+        <div class="flex gap-4 ">
+
+          <button *ngIf="action === 'SHARE'"
+            class="bg-orange-100 px-4 py-2 border border-orange-300 text-orange-400 cursor-pointer rounded-md"
+            (click)="copyLink()">Copy Link</button>
+
+          <!-- Right button -->
+          <button class="bg-orange-400 px-4 py-2 text-white cursor-pointer rounded-md" (click)="submitShare()">{{ action
+            === 'GRANT_ACCESS' ? 'Grant Access' : 'Send'}}</button>
+        </div>
+        <!-- Left button -->
+      </div>
+
+    </form>
+
+    <div *ngIf="action === 'LINK_ACCESS' && sharedDetails.length == 1" class="m-2 h-full sm:h-[420px]">
+      <h3 class="mb-2 text-gray-600">The link allows access for</h3>
+      <div class="flex flex-col space-y-4">
+        <label class="flex flex-col cursor-pointer">
+          <div class="flex items-center">
+            <input type="radio" name="access" value="ANYONE" [(ngModel)]="linkAccess" class="hidden">
+
+            <!-- Custom radio circle -->
+            <span class="w-3 h-3 flex-shrink-0 rounded-full border-1 border-gray-600 flex items-center justify-center mr-2
+               transition-colors duration-200
+               " [class.border-orange-500]="linkAccess === 'ANYONE'">
+              <span *ngIf="linkAccess === 'ANYONE'" class="w-2 h-2 bg-orange-500 rounded-full"></span>
+            </span>
+
+            <!-- Label text -->
+            <span class="font-medium text-sm">Anyone</span>
+          </div>
+          <span class="ml-6 text-xs text-gray-500">
+            Share with anyone
+          </span>
+        </label>
+
+        <label class="flex flex-col cursor-pointer">
+          <div class="flex items-center">
+            <input type="radio" name="access" value="EXISTING" [(ngModel)]="linkAccess" class="hidden">
+            <span class="w-3 h-3 flex-shrink-0 rounded-full border-1 border-gray-600 flex items-center justify-center mr-2
+               transition-colors duration-200
+               " [class.border-orange-500]="linkAccess === 'EXISTING'">
+              <span *ngIf="linkAccess === 'EXISTING'" class="w-2 h-2 bg-orange-500 rounded-full"></span>
+            </span>
+
+            <span class="font-medium text-sm">Only people with existing access</span>
+          </div>
+          <span class="ml-6 text-xs text-gray-500">
+            Reshare with organization members who already have permission.
+          </span>
+        </label>
+
+        <label class="flex flex-col cursor-pointer">
+          <div class="flex items-center">
+            <input type="radio" name="access" value="CHOSEN" [(ngModel)]="linkAccess" class="hidden">
+            <span class="w-3 h-3 flex-shrink-0 rounded-full border-1 border-gray-600 flex items-center justify-center mr-2
+               transition-colors duration-200
+               " [class.border-orange-500]="linkAccess === 'CHOSEN'">
+              <span *ngIf="linkAccess === 'CHOSEN'" class="w-2 h-2 bg-orange-500 rounded-full"></span>
+            </span>
+            <span class="ml-2 font-medium text-sm">People you choose</span>
+          </div>
+          <span class="ml-6 text-xs text-gray-500">
+            Grant access to chosen people within or outside your organization using their name, group, or email.
+          </span>
+        </label>
+      </div>
+
+      <h3 class="mt-4 mb-2 text-gray-600">More settings</h3>
+      <div>
+        <div class="relative w-full">
+          <!-- Label acting as dropdown toggle -->
+          <button (click)="toggleDropdown()"
+            class="w-full h-10 bg-gray-200  px-3 mb-6 text-sm flex items-center justify-between focus:outline-none">
+            {{ getAccessLabel(selectedAccess) }}
+            <i class="fas fa-chevron-down ml-2"></i>
+          </button>
+
+          <!-- Dropdown menu -->
+          <ul *ngIf="isDropdownOpen" #dropDownMenu
+            class="absolute right-0 top-11 w-full p-1 bg-white border border-gray-300  rounded-md shadow-lg z-10">
+            <li *ngFor="let option of accessOptions" (click)="selectAccess(option.value)"
+              class="flex items-center justify-between px-2 py-1 font-medium text-[12px] cursor-pointer" [ngClass]="{
+      'bg-orange-400 rounded-md text-white': option.value === selectedAccess,
+      'hover:bg-gray-100': option.value !== selectedAccess
+    }">
+              <span>{{ option.label }}</span>
+              <span *ngIf="option.value === selectedAccess" class="text-sm">
+                <i class="fas fa-check"></i>
+              </span>
+            </li>
+
+          </ul>
+        </div>
+
+        <!-- <label class="flex justify-between">
+
+          <p>Set expiration date(MM/DD/YYYY) </p>
+          <span (click)="openDatePicker()"> <i class="fa-regular fa-calendar-days"></i></span>
+        </label> -->
+      </div>
+      <div class="flex mt-8 justify-between">
+        <div></div>
+        <div class="flex gap-4 justify-between">
+          <div class="flex gap-4 ">
+
+            <button (click)="closeDialog()"
+              class="bg-orange-100 px-4 py-2 border border-orange-300 text-orange-400 cursor-pointer rounded-md">Cancel</button>
+
+            <!-- Right button -->
+            <button (click)="updateShareDetails('SHARE')"
+              class="bg-orange-400 px-4 py-2 text-white cursor-pointer rounded-md">Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="action === 'MANAGE_ACCESS'" class="">
+      <div class="flex items-center justify-between gap-2 px-1 py-3 border-b border-gray-200 ">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6" *ngIf="selectedItem">
+            <ng-container *ngIf="selectedItem.isFolder">
+              <svg class="w-6 h-6 mx-auto" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M100 30.0007H55.0003L45.0003 20.0007H20.0002C14.5002 20.0007 10.0002 24.5007 10.0002 30.0007V50.0007H110V40.0007C110 34.5007 105.5 30.0007 100 30.0007Z"
+                  [attr.fill]="getDarkColor(selectedItem) || '#FFA000'" />
+                <path
+                  d="M100 30H20.0002C14.5002 30 10.0002 34.5 10.0002 40V90C10.0002 95.5 14.5002 100 20.0002 100H100C105.5 100 110 95.5 110 90V40C110 34.5 105.5 30 100 30Z"
+                  [attr.fill]="selectedItem.color || '#FFCA28'" />
+              </svg>
+            </ng-container>
+
+            <ng-container *ngIf="!selectedItem.isFolder">
+              <img [src]="'assets/icons/' + getIconForNode(selectedItem)" class="w-6 h-6 shrink-0" />
+            </ng-container>
+          </div>
+          <span *ngIf="selectedItem" class="text-sm font-medium">
+
+            <p class="text-xs text-gray-400">
+              {{selectedItem.itemName}}
+            </p>
+          </span>
+        </div>
+        <div>
+          <select [(ngModel)]="linkAccess" class="border cursor-pointer border-gray-300 rounded-md px-1 py-0.5 flex items-center focus:outline-none">
+            <option *ngFor="let key of (linkLable | keyvalue)" [value]="key.key">
+              {{ key.value }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="py-2">
+        <div class="relative w-full">
+          <!-- 🔍 Search icon -->
+          <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+            <i class="fas fa-search"></i>
+          </div>
+
+          <!-- 🔎 Input box -->
+          <input type="text" [(ngModel)]="searchQuery" (input)="filterUsers(); onSearchChange($event)"
+            placeholder="Search name or email"
+            class="w-full pl-10 pr-3 py-2 border-b border-gray-200 text-sm text-gray-700 focus:outline-none" />
+
+          <!-- 💡 Suggestion dropdown -->
+
+             <div *ngIf="suggestedUsers.length > 0"
+            class="absolute z-20 w-full bg-white border border-gray-200 rounded-xl mt-1 shadow-xl overflow-hidden">
+
+            <div class="max-h-64 overflow-y-auto divide-y divide-gray-100">
+              <div *ngFor="let user of suggestedUsers" (click)="inviteNewUser(user.email)"
+                class="flex items-center justify-between px-4 py-2 cursor-pointer transition-colors duration-150 hover:bg-orange-50">
+
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 flex items-center justify-center rounded-full font-semibold text-white"
+                    [ngClass]="getColor(user)">
+                    {{ getInitial(user) }}
+                  </div>
+
+                  <div>
+                    <p class="text-sm font-medium text-gray-800 truncate max-w-[160px]"
+                      title="{{ getDisplayName(user) }}">
+                      {{ getDisplayName(user) }}
+                    </p>
+                    <p class="text-xs text-gray-500 truncate max-w-[180px]" title="{{ user.email }}">
+                      {{ user.email }}
+                    </p>
+                  </div>
+                </div>
+
+                <button type="button"
+                  class="text-xs text-orange-500 border cursor-pointer border-orange-400 px-2 py-0.5 rounded-md hover:bg-orange-100">
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- <div *ngIf="suggestedUsers.length > 0"
+            class="absolute z-10 w-full bg-white border border-gray-200 rounded-md mt-1 shadow-lg max-h-60 overflow-y-auto">
+            <div *ngFor="let user of suggestedUsers" (click)="inviteNewUser(user.email)"
+              class="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm text-gray-700 flex items-center justify-between">
+              <div class="flex items-center gap-3 flex-1">
+                <div class="w-8 h-8 flex items-center justify-center rounded-full text-white font-semibold"
+                  [ngClass]="getColor(user)">
+                  {{ getInitial(user) }}
+                </div>
+                <div>
+                  <p class="text-sm font-medium max-w-[150px] truncate" title="{{ getDisplayName(user) }}">
+                    {{ getDisplayName(user) }}
+                  </p>
+                  <p class="text-xs text-gray-500 max-w-[160px] truncate" title="{{ user.email }}">
+                    {{ user.email }}
+                  </p>
+                </div>
+
+              </div>
+            </div>
+          </div> -->
+        </div>
+
+      </div>
+
+      <div class="px-1 pb-4 space-y-3 min-h-60 max-h-80 overflow-y-auto">
+        <ng-container *ngIf="filteredUsers.length; else noUser">
+          <div *ngFor="let user of users" class="flex items-center justify-between">
+            <div class="w-10 flex justify-center" *ngIf="linkAccess === 'CHOSEN'">
+              <button (click)="user.isAllow = !user.isAllow" class="w-5 h-5 flex items-center justify-center rounded-full border-2
+                           transition-colors duration-200 cursor-pointer" [ngClass]="user.isAllow
+                      ? 'bg-orange-400 border-orange-400'
+                      : 'border-gray-300 bg-white'">
+          
+                <i *ngIf="user.isAllow" class="fas fa-check text-white text-xs"></i>
+              </button>
+            </div>
+            <div class="flex items-center gap-3 flex-1">
+              <div class="w-10 h-10 flex items-center justify-center rounded-full text-white font-semibold"
+                [ngClass]="getColor(user)">
+                {{ getInitial(user) }}
+              </div>
+              <div>
+                <p class="text-sm font-medium max-w-[150px] truncate" title="{{ user.name }}">
+                  {{ user.name }}{{user.id}}
+                </p>
+                <p class="text-xs text-gray-500 max-w-[160px] truncate" title="{{ user.email }}">
+                  {{ user.email }}
+                </p>
+              </div>
+
+            </div>
+
+
+
+            <div class="w-40 relative text-start">
+              <span *ngIf="user.permissionType === 'OWNER'" class="text-sm ml-8 text-gray-600 font-medium">
+                Owner
+              </span>
+
+              <div *ngIf="user.permissionType !== 'OWNER'" class="relative" #dropdownContainer>
+                <button (click)="accessDropdown(user, $event)"
+                  class="text-sm cursor-pointer text-grey-400 truncate w-full">
+                  {{ getRoleLabel(user) }} <i class="fas fa-angle-right"></i>
+                </button>
+
+                <ul *ngIf="user.showOptions"
+                  class="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded shadow-lg z-10">
+                  <li *ngFor="let option of accessOptions" (click)="selectOption(user, option)"
+                    class="px-4 py-2 text-left cursor-pointer text-sm text-gray-700 hover:bg-orange-50"
+                    [ngClass]="option.value === user.permissionType ? 'bg-orange-100 font-medium' : ''">
+                    {{ option.label }}
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div *ngIf="user.permissionType !== 'OWNER'">
+              <sl-spinner style="font-size: 1rem; color: #ff8705;" *ngIf="deleteSpinner && user?.email == deleteLoadingEmail" ></sl-spinner>
+              <i class="fa fa-trash text-orange-400 cursor-pointer" *ngIf="!deleteSpinner || user?.email !== deleteLoadingEmail" (click)="deleteManageAccess(user.email, user?.isNotSaved)"></i>
+            </div>
+                           
+
+
+          </div>
+        </ng-container>
+
+        <ng-template #noUser>
+          <div
+            class="flex items-center gap-3 p-3 bg-orange-50 border border-orange-200 rounded-lg cursor-pointer hover:bg-orange-100 transition"
+            (click)="inviteNewUser(searchQuery)">
+            <div class="w-8 h-8 flex items-center justify-center rounded-full bg-orange-400 text-white">
+              <i class="fas fa-user-plus text-sm"></i>
+            </div>
+
+            <div>
+              <p class="text-sm font-medium text-gray-700">
+                Invite <span class="text-orange-500 font-semibold">"{{ searchQuery }}"</span>
+              </p>
+              <p class="text-xs text-gray-500 -mt-0.5">
+                Send an invitation to this user
+              </p>
+            </div>
+          </div>
+        </ng-template>
+      </div>
+      <div class="flex justify-end mt-1">
+        <button (click)="sendRequest()"
+          class="bg-orange-400 px-4 py-2 text-white cursor-pointer rounded-md hover:bg-orange-600 transition">
+          Grant Access
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="action === 'MANAGE_PEOPLE_ACCESS'" class="m-2 h-full sm:h-[420px]">
+      <!-- Section Title -->
+
+
+      <p class="mb-3 text-gray-700 ">Access summary</p>
+
+      <div *ngIf="selectedUser" class="flex items-center gap-3 flex-1 mb-4">
+        <div class="w-10 h-10 flex items-center justify-center rounded-full text-white font-semibold"
+          [ngClass]="selectedUser.color">
+          {{ selectedUser.name.charAt(0) }}
+        </div>
+        <div>
+          <p class="text-sm font-medium max-w-[150px] truncate" title="{{ selectedUser.name }}">
+            {{ selectedUser.name }}
+          </p>
+          <p class="text-xs text-gray-500 max-w-[160px] truncate" title="{{ selectedUser.email }}">
+            {{ selectedUser.email }}
+          </p>
+        </div>
+
+      </div>
+      <div class="relative w-full">
+        <!-- Label acting as dropdown toggle -->
+        <button class="w-full h-10 bg-gray-200  px-3 mb-2 text-sm flex items-center justify-between focus:outline-none">
+          {{ getAccessLabel(selectedPeopleAccess) }}
+          <i class="fas fa-chevron-down ml-2"></i>
+        </button>
+      </div>
+      <!-- Radio List -->
+      <div class="space-y-3">
+        <label *ngFor="let option of accessOptions" class="flex flex-col cursor-pointer p-1 rounded-md transition
+                    hover:bg-gray-100">
+
+          <div class="flex items-center">
+            <!-- Hidden Radio -->
+            <input type="radio" name="accessOption" [value]="option.value" [(ngModel)]="selectedPeopleAccess"
+              class="hidden" />
+
+            <!-- Custom Radio -->
+            <span
+              class="w-4 h-4 flex-shrink-0 rounded-full border border-gray-400 flex items-center justify-center mr-2 transition"
+              [class.border-orange-400]="selectedPeopleAccess === option.value">
+              <span *ngIf="selectedPeopleAccess === option.value" class="w-2 h-2 bg-orange-400 rounded-full"></span>
+            </span>
+
+            <!-- Label -->
+            <span class="font-medium text-sm">{{ option.label }}</span>
+          </div>
+
+          <!-- Sublabel -->
+          <span class="ml-6 text-xs text-gray-400">{{ option.subLabel }}</span>
+        </label>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="flex justify-end mt-8 gap-4">
+        <button (click)="deleteAccessedUsers(selectedUser.email)"
+          class="bg-gray-100 px-4 py-2 border border-gray-300 cursor-pointer rounded-md hover:bg-orange-200 transition">
+          {{'DELETE' | translate}}
+        </button>
+        <button (click)="action = 'SHARE'"
+          class="bg-gray-100 px-4 py-2 border border-gray-300 cursor-pointer rounded-md hover:bg-orange-200 transition">
+          Cancel
+        </button>
+        <button (click)="updatePermission()"
+          class="bg-orange-400 px-4 py-2 text-white cursor-pointer rounded-md hover:bg-orange-600 transition">
+          Apply
+        </button>
+      </div>
+
+
+    </div>
+  </div>
+
+  <div *ngIf="action === 'LINK_ACCESS' && sharedDetails.length > 1"
+    class=" w-full max-w-[650px] max-h-[70vh] overflow-hidden flex flex-col">
+
+    <!-- Scrollable content -->
+    <div class="overflow-y-auto flex-1">
+
+      <!-- Links Section -->
+      <div class="space-y-2" *ngFor="let item of sharedDetails; let last = last"
+        [ngClass]="{'border-b border-dashed border-gray-300 pb-5': !last}">
+
+        <div class=" hover:rounded-xl p-4 mt-2 hover:bg-orange-50 transition-colors duration-200">
+
+          <!-- First driveItem as node -->
+          <div class="flex items-center justify-between mt-4" *ngIf="item.driveItems[0] as node">
+
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <!-- Folder Icon -->
+              <ng-container *ngIf="node.isFolder">
+                <svg class="w-10 h-10 mx-auto flex-shrink-0" viewBox="0 0 120 120" fill="none"
+                  xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M100 30.0007H55.0003L45.0003 20.0007H20.0002C14.5002 20.0007 10.0002 24.5007 10.0002 30.0007V50.0007H110V40.0007C110 34.5007 105.5 30.0007 100 30.0007Z"
+                    [attr.fill]="getDarkColor(node)" />
+                  <path
+                    d="M100 30H20.0002C14.5002 30 10.0002 34.5 10.0002 40V90C10.0002 95.5 14.5002 100 20.0002 100H100C105.5 100 110 95.5 110 90V40C110 34.5 105.5 30 100 30Z"
+                    [attr.fill]="node.color || '#FFCA28'" />
+                </svg>
+              </ng-container>
+
+              <!-- File Icon -->
+              <ng-container *ngIf="!node.isFolder">
+                <img [src]="'assets/icons/' + getIconForNode(node)" class="w-6 h-6 mb-2 shrink-0" />
+              </ng-container>
+
+              <!-- File/Folder Name -->
+              <div class="truncate w-full">
+                <span class="block truncate" [title]="node.itemName">
+                  {{ (node.itemName || '').length > 40 ? (node.itemName?.slice(0, 37) + '...') : node.itemName }}
+                </span>
+              </div>
+
+            </div>
+
+            <!-- Share Action Picklist -->
+            <div class="relative ml-3">
+              <!-- Button -->
+              <button type="button"
+                (click)="$event.stopPropagation(); item.showShareActionDropdown = !item.showShareActionDropdown"
+                class="inline-flex w-full cursor-pointer justify-center items-center w-full rounded-full bg-orange-100 text-orange-400 px-3 py-1 text-xs font-medium hover:bg-orange-200 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2">
+                {{ getShareActionLabel(item.shareDetails.shareAction || 'ANYONE') }}
+                <svg class="ml-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              <!-- Dropdown -->
+              <div *ngIf="item.showShareActionDropdown"
+                class="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded shadow-lg z-50 origin-top scale-95 opacity-0 transition-all duration-150 ease-out"
+                [class.scale-100]="item.showShareActionDropdown" [class.opacity-100]="item.showShareActionDropdown">
+                <ul class="py-1">
+                  <li *ngFor="let key of ['ANYONE','EXISTING','CHOSEN']"
+                    class="px-4 py-2 text-sm text-gray-700 hover:bg-orange-100 cursor-pointer flex items-center"
+                    (click)="updateShareAction(item.shareDetails) ; item.shareDetails.shareAction = key; item.showShareActionDropdown = false">
+                    {{ getShareActionLabel(key) }}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Link Row with Copy + Gear -->
+          <div class="flex items-center justify-between mt-4">
+
+            <!-- Input + Copy -->
+            <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden flex-1">
+              <input type="text" class="flex-1 px-3 py-2 text-sm text-gray-700 outline-none"
+                [value]="getShareableLink(item.shareDetails)" readonly />
+              <button (click)="copyLink(item.shareDetails)"
+                class="border-l border-gray-300 bg-white text-orange-300 px-3 py-2 rounded-r-md hover:bg-orange-50 transition-colors cursor-pointer">
+                Copy
+              </button>
+            </div>
+
+            <!-- Gear Dropdown -->
+            <!-- <div class="relative ml-3">
+              <button (click)="$event.stopPropagation(); action = 'MANAGE_ACCESS'"
+                class="px-3 py-2 cursor-pointer text-gray-500 hover:text-orange-400 flex-shrink-0">
+                <i class="fas fa-gear"></i>
+              </button>
+  
+              <ul *ngIf="item.showGearDropdown" (click)="$event.stopPropagation()"
+                class="absolute right-0 mt-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                <li class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">Edit</li>
+                <li class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">Remove</li>
+                <li class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">Settings</li>
+              </ul>
+            </div> -->
+
+          </div>
+
+          <!-- Shared Users -->
+          <label class="text-sm text-gray-600 block mb-1 mt-3">
+            People you specify {{ getAccessLabel(item.shareDetails.permissionType) }}
+          </label>
+
+          <div class="mt-2 pt-2">
+            <ng-container *ngIf="item.shareUserPermissions && item.shareUserPermissions.length; else noUsers">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-gray-600 mb-2">Shared with</p>
+                  <div class="flex my-2 -space-x-4">
+                    <ng-container *ngFor="let user of item.shareUserPermissions">
+                      <div (click)="selectedManageAccess(user)"
+                        class="w-10 h-10 cursor-pointer flex items-center justify-center rounded-full border-2 border-white text-white font-semibold shadow-sm"
+                        [ngClass]="getColor(user)" [title]="user.userName">
+                        {{ getInitial(user) }}
+                      </div>
+                    </ng-container>
+                  </div>
+                </div>
+
+                <!-- ✅ Always show Add User button here -->
+                <button (click)="grantAccess(item)"
+                  class="bg-orange-100 cursor-pointer text-orange-400 hover:bg-orange-200 text-sm font-medium px-3 py-1.5 rounded-md">
+                  + Add User
+                </button>
+              </div>
+            </ng-container>
+
+            <!-- Shown when there are no shared users -->
+            <ng-template #noUsers>
+              <div
+                class="flex items-center justify-between mt-2 bg-white border border-dashed border-gray-300 rounded-lg p-2">
+                <p class="text-gray-500 text-sm">No users have access yet.</p>
+                <button (click)="grantAccess(item)"
+                  class="bg-orange-100 cursor-pointer text-orange-400 hover:bg-orange-200 text-sm font-medium px-3 py-1.5 rounded-md">
+                  + Add User
+                </button>
+              </div>
+            </ng-template>
+          </div>
+
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Sticky Footer -->
+    <div class="flex justify-end p-2 bg-white border-t border-gray-200">
+      <button (click)="copyAllLinks()"
+        class="bg-orange-400 cursor-pointer hover:bg-orange-300 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        Copy All Links
+      </button>
+    </div>
+  </div>
+</div>

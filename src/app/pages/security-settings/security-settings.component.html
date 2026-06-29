@@ -1,0 +1,91 @@
+<!-- STEP 1: Password Page -->
+<div *ngIf="passwordPage && !recoveryEmailPage" class="flex justify-center items-center h-full w-full bg-white">
+  <div class="bg-white shadow-lg rounded-xl p-8 w-full max-w-md text-center">
+    <!-- Illustration -->
+    <img src="assets/icons/authentication.png" alt="2FA" class="mx-auto mb-6 w-[280px] h-[200px]" />
+
+    <!-- Heading -->
+    <h2 class="text-lg md:text-xl font-semibold mb-2">Enable Two-Factor Authentication</h2>
+    <p class="text-gray-500 text-sm mb-6">
+      Whenever you sign in to your account, you’ll need to enter both your password and a security code from your mobile device.
+    </p>
+
+    <!-- Password Form -->
+    <form [formGroup]="passwordForm" class="space-y-4 text-left">
+      <label for="accountPassword" class="block text-sm font-medium text-gray-700">Password</label>
+      <input
+        type="password"
+        id="accountPassword"
+        formControlName="accountPassword"
+        placeholder="Enter your password"
+        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+      />
+
+      <!-- Button Row -->
+      <div class="flex justify-between mt-6">
+        <button
+          type="button"
+          class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 text-gray-700 cursor-pointer"
+          (click)="cancelBtn()"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+          [disabled]="passwordForm.get('accountPassword')?.invalid"
+          (click)="goToRecoveryEmailPage()"
+        >
+          Continue
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- STEP 2: Recovery Email Page -->
+<div *ngIf="recoveryEmailPage && !qrCodePage" class="flex justify-center items-center h-full w-full bg-white">
+  <div class="bg-white shadow-lg rounded-xl p-8 w-full max-w-md text-center">
+    <!-- Illustration -->
+    <img src="assets/icons/authentication.png" alt="2FA" class="mx-auto mb-6 w-[280px] h-[200px]" />
+
+    <!-- Heading -->
+    <h2 class="text-lg md:text-xl font-semibold mb-2">Enter Recovery Email</h2>
+    <p class="text-gray-500 text-sm mb-6">
+      Please enter your recovery email address to continue setting up Two-Factor Authentication.
+    </p>
+
+    <!-- Email Form -->
+    <form [formGroup]="recoveryEmailForm" class="space-y-4 text-left">
+      <label for="recoveryEmail" class="block text-sm font-medium text-gray-700">Recovery Email</label>
+      <input
+        type="email"
+        id="recoveryEmail"
+        formControlName="recoveryEmail"
+        placeholder="Enter your recovery email"
+        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+      />
+
+      <!-- Buttons -->
+      <div class="flex justify-between mt-6">
+        <button
+          type="button"
+          class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 text-gray-700 cursor-pointer"
+          (click)="cancelBtn()"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+          [disabled]="recoveryEmailForm.get('recoveryEmail')?.invalid"
+          (click)="goToQrCodePage()"
+        >
+          Continue
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

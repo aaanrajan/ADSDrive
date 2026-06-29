@@ -1,0 +1,440 @@
+<div *ngIf="isLoading"
+  class="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 px-4">
+  <div
+    class="text-center space-y-6 bg-white p-8 rounded-2xl shadow-xl border border-gray-200 max-w-sm w-full animate-fade-in">
+
+    <!-- Spinner (use sl-spinner or Tailwind spinner) -->
+    <sl-spinner style="font-size: 2rem; color: #ff8705;"></sl-spinner>
+
+    <!-- Message -->
+    <div>
+      <h2 class="text-xl font-semibold text-gray-800">Verifying Access</h2>
+      <p class="text-gray-500 mt-2">Please wait while we confirm your access permissions...</p>
+    </div>
+  </div>
+</div>
+
+
+<div *ngIf="!isLoading && isAuthorized" class="min-h-screen  bg-gradient-to-r from-orange-200 to-orange-400">
+
+  <header class="flex items-center justify-between px-10 py-2">
+    <!-- Left: Logo + App Name -->
+    <div class="flex items-center space-x-2">
+      <img src="assets/logo.png" alt="App Logo" class="h-8 w-8" />
+      <span class="text-xl font-semibold text-orange-400 hidden sm:inline">
+        ADS DRIVE
+      </span>
+    </div>
+
+    <!-- Right: User Info or Login -->
+    <div *ngIf="isLoggedIn; else loginButton" class="flex bg-orange-400 p-2 rounded-full shadow border-1 border-white items-center sm:space-x-2">
+      <!-- <img
+      [src]="'assets/user-placeholder.png'"
+      class="h-10 w-10 rounded-full border"
+    /> -->
+      <div
+        class="w-10 h-10 flex items-center justify-center cursor-pointer rounded-full border-2 border-white text-white font-semibold"
+        [ngClass]="getColor(user)" [title]="user.fullName">
+        {{ getInitial(user) }}
+      </div>
+      <div class="hidden sm:flex flex-col text-left min-w-0 max-w-[220px]">
+        <span class="truncate text-sm font-medium text-white block" title="{{ user.fullName }}">
+          {{ user.fullName }}
+        </span>
+        <span class="truncate text-xs text-gray-50 block" title="{{ user.email }}">
+          {{ user.email }}
+        </span>
+      </div>
+
+    </div>
+
+    <!-- If not logged in -->
+    <ng-template #loginButton>
+      <button (click)="navigateToLogin()"
+        class="bg-orange-400 cursor-pointer font-semibold text-white px-4 py-2 rounded-full hover:bg-orange-600 text-sm">
+        Login
+      </button>
+    </ng-template>
+  </header>
+
+
+
+  <div class="mx-10 my-2 p-6 min-h-[88vh] bg-gradient-to-r from-orange-100 via-orange-200 to-orange-100 rounded-md shadow">
+
+    <div *ngIf="isShowBreadcrumb" class="mb-4 ">
+
+      <app-page-header
+      title="Home"
+      subtitle="Display all the files uploaded into cloud"
+      [breadcrums]="breadcrums"
+      (breadcrumbClicked)="onFolderClick($event)">
+    </app-page-header> 
+    </div>  
+    <div *ngIf="
+            (driveData.length > 1 || driveData[0]?.isFolder || breadcrums.length > 1 )"
+      class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 max-h-[78vh] overflow-auto">
+
+     
+
+      <!-- File Card -->
+      <div *ngFor="let file of driveData"
+        class="group relative  rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 p-2 w-60 h-55 flex flex-col items-center">
+        <!-- <i class=" hiddenfas fa-ellipsis-v absolute top-4 right-4 text-gray-500 hover:text-orange-500 cursor-pointer"></i> -->
+      
+      
+        <!-- Three Dots Menu -->
+        <div class="absolute top-3 right-3 hidden" (click)="$event.stopPropagation()">
+      
+          <!-- 3 Dots -->
+          <i class="menu-trigger fas fa-ellipsis-v text-gray-600 hover:text-orange-500 cursor-pointer"
+            (click)="toggleMenu(file); $event.stopPropagation()"></i>
+      
+          <!-- Dropdown -->
+          <div *ngIf="file.showMenu"
+            class="menu-container absolute right-0 mt-2 w-40 bg-white shadow-xl border border-gray-200 rounded-lg z-50"
+            (click)="$event.stopPropagation()" (mouseleave)="closeAllMenus()">
+      
+      
+            <button (click)="openItem(file)"
+              class="w-full flex items-center gap-2 px-2 py-2 hover:bg-orange-50 cursor-pointer">
+              <i class="fas fa-file text-orange-400"></i> Open
+            </button>
+      
+            <button (click)="download(file)"
+              class="w-full flex items-center gap-2 px-2 py-2 hover:bg-orange-50 cursor-pointer">
+              <i class="fas fa-download text-orange-400"></i> Download
+            </button>
+      
+            <button (click)="requestAccess(file)"
+              class="w-full flex items-center gap-2 px-2 py-2 hover:bg-orange-50 cursor-pointer">
+              <i class="fa-solid fa-hand text-orange-400"></i> Request Access
+            </button>
+      
+            <button (click)="comment(file)"
+              class="w-full flex items-center gap-2 px-2 py-2 hover:bg-orange-50 cursor-pointer">
+              <i class="fa-solid fa-location-arrow text-orange-400"></i> Comment
+            </button>
+          </div>
+      
+        </div>
+      
+      
+        <!-- File / Folder Name -->
+        <h3 class="font-medium text-center truncate text-gray-800 text-lg mb-4 w-full" title="{{ file.itemName }}">
+          {{ file.itemName }}
+        </h3>
+      
+        <!-- Accessible Files -->
+        <div *ngIf="file.accessible; else restricted" class="flex flex-col items-center space-y-3">
+          <div (dblclick)="openItem(file)"
+          (click)="onItemClick($event, file)"
+            class="w-28 h-28 cursor-pointer flex items-center justify-center rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 group-hover:from-gray-200 group-hover:to-gray-100 transition-all duration-300">
+      
+            <!-- Folder Icon -->
+            <ng-container *ngIf="file.isFolder">
+              <svg class="w-20 h-auto mx-auto" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M100 30.0007H55.0003L45.0003 20.0007H20.0002C14.5002 20.0007 10.0002 24.5007 10.0002 30.0007V50.0007H110V40.0007C110 34.5007 105.5 30.0007 100 30.0007Z"
+                  [attr.fill]="file.darkenColor || '#F59E0B'" />
+                <path
+                  d="M100 30H20.0002C14.5002 30 10.0002 34.5 10.0002 40V90C10.0002 95.5 14.5002 100 20.0002 100H100C105.5 100 110 95.5 110 90V40C110 34.5 105.5 30 100 30Z"
+                  [attr.fill]="file.color || '#FCD34D'" />
+              </svg>
+            </ng-container>
+      
+            <!-- File Icon -->
+            <ng-container *ngIf="!file.isFolder">
+              <img [src]="'assets/icons/' + getIconForNode(file)" class="w-20 h-20" />
+            </ng-container>
+          </div>
+      
+      
+          <div class="relative group">
+      
+            <!-- Your folder / file card -->
+            <div class="p-4 truncate" [title]="file.name">
+              {{ file.name }}
+            </div>
+      
+            <!-- Action Icons -->
+            <div class="absolute inset-x-0 bottom-2 flex items-center justify-center gap-4 
+                       opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+      
+              <!-- Open -->
+              <button (click)="openItem(file)" class="text-orange-400 hover:scale-110 transition cursor-pointer" title="Open">
+                <i class="fas fa-file"></i>
+              </button>
+      
+              <!-- Download -->
+              <button (click)="download(file)" class="text-orange-400 hover:scale-110 transition cursor-pointer"
+                title="Download">
+                <i class="fas fa-download"></i>
+              </button>
+      
+              <!-- Request Access -->
+              <button (click)="requestAccess(file)" class="text-orange-400 hover:scale-110 transition cursor-pointer"
+                title="Request Access">
+                <i class="fa-solid fa-hand"></i>
+              </button>
+      
+              <!-- Comment -->
+              <button (click)="comment(file)" class="text-orange-400 hover:scale-110 transition cursor-pointer"
+                title="Comment">
+                <i class="fa-solid fa-location-arrow"></i>
+              </button>
+      
+            </div>
+          </div>
+      
+        </div>
+      
+      
+      
+      
+        <!-- comment -->
+      
+        <div *ngIf="showCommentPopup" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      
+          <div class="bg-white rounded-xl p-6 w-[360px] shadow-xl">
+      
+            <h2 class="text-xl font-semibold mb-4">{{'COMMENT' | translate}}</h2>
+      
+            <label class="text-gray-700 text-sm">{{'EMAIL_ADDRESS' | translate}}</label>
+            <input type="text" [(ngModel)]="emailInput" class="w-full border px-3 py-2 rounded-lg mb-4 bg-gray-100"
+              disabled />
+      
+            <label class="text-gray-700 text-sm">{{'COMMENT' | translate}}</label>
+            <textarea [(ngModel)]="commandText" rows="4" class="w-full border px-3 py-2 rounded-lg mb-6 resize-none"
+              placeholder="{{'ENTER_COMMENT' | translate}}"></textarea>
+      
+            <div class="flex justify-end gap-3">
+              <button (click)="closeComment()" class="bg-red-600 text-white px-4 py-2 rounded-lg cursor-pointer">
+                {{'CANCEL' | translate}}
+              </button>
+      
+              <button (click)="submitCommand()" class="bg-orange-500 text-white px-4 py-2 rounded-lg cursor-pointer">
+                {{'COMMENT' | translate}}
+              </button>
+            </div>
+      
+          </div>
+      
+        </div>
+      
+      
+      
+        <!-- comment -->
+      
+        <!-- Restricted Files -->
+        <ng-template #restricted>
+          <div class="flex flex-col items-center space-y-3">
+            <div class="relative w-28 h-28 flex items-center justify-center rounded-2xl bg-gray-200 overflow-hidden">
+              <!-- Overlay -->
+              <div class="absolute inset-0 bg-gray-100 opacity-50"></div>
+      
+              <!-- Folder Icon -->
+              <ng-container *ngIf="file.isFolder">
+                <svg class="w-20 h-auto mx-auto relative z-10" viewBox="0 0 120 120" fill="none"
+                  xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M100 30.0007H55.0003L45.0003 20.0007H20.0002C14.5002 20.0007 10.0002 24.5007 10.0002 30.0007V50.0007H110V40.0007C110 34.5007 105.5 30.0007 100 30.0007Z"
+                    [attr.fill]="file.darkenColor || '#F59E0B'" />
+                  <path
+                    d="M100 30H20.0002C14.5002 30 10.0002 34.5 10.0002 40V90C10.0002 95.5 14.5002 100 20.0002 100H100C105.5 100 110 95.5 110 90V40C110 34.5 105.5 30 100 30Z"
+                    [attr.fill]="file.color || '#FCD34D'" />
+                </svg>
+              </ng-container>
+      
+              <!-- File Icon -->
+              <ng-container *ngIf="!file.isFolder">
+                <img [src]="'assets/icons/' + getIconForNode(file)" class="w-20 h-20 relative z-10" />
+              </ng-container>
+      
+              <!-- Lock Icon -->
+              <div class="absolute inset-0 flex items-center justify-center z-20 bg-white/30 backdrop-blur-sm">
+                <i class="fa fa-lock text-gray-400 text-3xl"></i>
+              </div>
+            </div>
+      
+            <p class="text-gray-500 text-sm">Restricted Access</p>
+      
+            <button (click)="requestAccess(file)"
+              class="px-3 py-1.5 cursor-pointer border border-gray-300 bg-orange-400 rounded-lg text-sm text-gray-700 hover:bg-orange-300 transition">
+              Request Access
+            </button>
+      
+          </div>
+        </ng-template>
+      
+      </div>
+    </div>
+
+    <!-- File Preview Modal -->
+    <div *ngIf="isModalOpen" 
+    [ngClass]="{
+    'fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50': breadcrums.length > 1,
+    'w-full h-[calc(100vh-64px)] bg-transparent': isSingleFileView
+  }"
+    >
+      <app-file-preview [selectedFile]="selectedFile" (close)="closeModal()" [showClose]="showClose">
+      </app-file-preview>
+    </div>
+  </div>
+</div>
+
+
+<div *ngIf="!isLoading && isRedirecting"
+  class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 px-4">
+  <div class="bg-white shadow-2xl rounded-3xl p-10 max-w-md w-full text-center border border-gray-200 animate-fade-in">
+    <!-- Icon -->
+    <div class="flex justify-center mb-6">
+      <div class="bg-blue-100 text-blue-600 rounded-full p-3">
+        <svg class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 11c0-1.104.896-2 2-2h2a2 2 0 012 2v6H8v-6a2 2 0 012-2h2a2 2 0 012 2z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 17v1m0 4h.01" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Heading -->
+    <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4">Verification Required</h1>
+
+    <!-- Description -->
+    <p class="text-gray-600 mb-6 text-base">
+      You’re trying to access a secure shared item.<br />
+      Please log in to verify your identity and continue.
+    </p>
+
+    <!-- Button -->
+    <button (click)="navigateToLogin()"
+      class="w-full bg-gradient-to-r cursor-pointer from-orange-400 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white py-3 rounded-xl font-semibold transition disabled:opacity-50">
+      Log in to Continue
+    </button>
+  </div>
+</div>
+
+
+
+<div *ngIf="!isLoading && !isAuthorized && errorMessage"
+  class="flex items-center justify-center min-h-screen bg-gray-50 px-4">
+  <div
+    class="bg-white border border-gray-200 shadow-xl rounded-2xl p-8 max-w-md w-full text-center space-y-5 animate-fade-in">
+
+    <!-- Icon -->
+    <div class="text-yellow-500">
+      <svg class="w-10 h-10 mx-auto" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M12 9v2m0 4h.01M12 5.5c-3.59 0-6.5 2.91-6.5 6.5S8.41 18.5 12 18.5s6.5-2.91 6.5-6.5S15.59 5.5 12 5.5z" />
+      </svg>
+    </div>
+
+    <!-- Heading -->
+    <h2 class="text-xl font-semibold text-gray-800">Access Restricted</h2>
+
+    <!-- Description -->
+    <p class="text-gray-600">
+      {{ errorMessage || "You’re logged in, but you don’t currently have access to this shared content." }}
+    </p>
+
+    <!-- Request Access Button -->
+    <button *ngIf="!accessRequested" (click)="requestAccess()"
+      class="w-full bg-gradient-to-r from-orange-200 to-orange-400 cursor-pointer hover:bg-blue-700 text-white font-medium py-2 rounded-xl transition">
+      Request Access
+    </button>
+
+    <!-- Success message -->
+    <div *ngIf="accessRequested" class="text-green-600 text-sm">
+      ✅ Access request sent to the content owner.
+    </div>
+
+    <!-- Optional: Switch Account -->
+    <button class="w-full cursor-pointer text-sm text-gray-500 hover:underline" (click)="navigateToLogin()">
+      Switch Account
+    </button>
+  </div>
+</div>
+
+
+<!-- Overlay -->
+<div
+  *ngIf="isDialogOpen"
+  class="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50"
+>
+  <!-- Dialog Card -->
+  <div
+    class="bg-white w-11/12 sm:w-[400px] rounded-2xl shadow-xl p-6 transform transition-all scale-100"
+  >
+    <!-- Title -->
+    <h2 class="text-xl font-semibold text-gray-800 mb-5">
+      Request Access
+    </h2>
+
+    <!-- Email Field -->
+    <div class="mb-4">
+      <label for="email" class="block text-sm font-medium text-gray-600 mb-2">
+        Email Address
+      </label>
+      <input
+        id="email"
+        type="email"
+        [(ngModel)]="emailInput"
+        placeholder="you@example.com"
+        class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition"
+      />
+    </div>
+
+    <!-- Access Dropdown -->
+    <div class="relative mb-6">
+      <button
+        (click)="toggleDropdown()"
+        class="w-full border cursor-pointer border-gray-300 rounded-lg px-3 py-2 text-sm flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
+      >
+        <span>{{ getAccessLabel(selectedAccess) }}</span>
+        <i class="fas fa-chevron-down text-gray-500 text-xs"></i>
+      </button>
+
+      <ul
+        *ngIf="isDropdownOpen"
+        #dropDownMenu
+        class="absolute left-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-md z-20 overflow-hidden"
+      >
+        <li
+          *ngFor="let option of accessOptions"
+          (click)="selectAccess(option.value)"
+          class="px-3 py-2 text-sm font-medium cursor-pointer flex items-center justify-between hover:bg-orange-50 transition"
+          [ngClass]="{
+            'bg-orange-400 text-white': option.value === selectedAccess
+          }"
+        >
+          <span>{{ option.label }}</span>
+          <i
+            *ngIf="option.value === selectedAccess"
+            class="fas fa-check text-white text-xs"
+          ></i>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex justify-end space-x-3">
+      <button
+        (click)="closeDialog()"
+        class="px-4 py-2 cursor-pointer bg-red-600 text-sm text-white rounded-lg border border-gray-300 hover:bg-red-500 transition"
+      >
+        Cancel
+      </button>
+
+      <button
+        (click)="submitDialog()"
+        [disabled]="!emailInput"
+        class="px-4 py-2 cursor-pointer text-sm rounded-lg bg-orange-400 text-white hover:bg-orange-500 disabled:opacity-50 transition"
+      >
+        Request
+      </button>
+    </div>
+  </div>
+</div>
+
+
+

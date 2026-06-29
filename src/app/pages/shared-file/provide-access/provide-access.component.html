@@ -1,0 +1,61 @@
+<div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+  <div class="w-full max-w-md bg-white shadow-lg rounded-2xl p-8 text-center">
+
+    <!-- 🔄 Loading -->
+    <div *ngIf="state === 'loading'">
+      <div class="w-12 h-12 mx-auto border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      <p class="mt-4 text-gray-600 text-lg font-medium">Loading access details...</p>
+    </div>
+
+    <!-- ✅ Owner providing access -->
+    <div *ngIf="state === 'success'">
+      <div class="text-blue-500 text-6xl mb-3">🔑</div>
+      <h2 class="text-xl font-semibold text-gray-800 mb-2">Provide Access</h2>
+
+      <div class="text-gray-600 text-sm mb-6">
+        <p><strong>Item:</strong> {{ shareData?.driveItemName }}</p>
+        <p><strong>Requester:</strong> {{ shareData?.requester }}</p>
+        <p><strong>Owner:</strong> {{ shareData?.owner }}</p>
+      </div>
+
+      <!-- Dropdown -->
+      <div class="relative mb-6 text-left">
+        <button (click)="toggleDropdown()"
+          class="w-full border cursor-pointer border-gray-300 rounded-lg px-3 py-2 text-sm flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-orange-400 transition">
+          <span>{{ getAccessLabel(selectedAccess) }}</span>
+          <i class="fas fa-chevron-down text-gray-500 text-xs"></i>
+        </button>
+
+        <ul *ngIf="isDropdownOpen" #dropDownMenu
+          class="absolute left-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-md z-20 overflow-hidden">
+          <li *ngFor="let option of accessOptions" (click)="selectAccess(option)"
+            class="px-3 py-2 text-sm font-medium cursor-pointer flex items-center justify-between hover:bg-orange-50 transition"
+            [ngClass]="{
+              'bg-orange-400 text-white': option.value === selectedAccess
+            }">
+            <div>
+              <span>{{ option.label }}</span>
+              <div class="text-xs text-gray-400" *ngIf="option.subLabel && option.value !== selectedAccess">
+                {{ option.subLabel }}
+              </div>
+            </div>
+            <i *ngIf="option.value === selectedAccess" class="fas fa-check text-white text-xs"></i>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Provide Access button -->
+      <button (click)="onProvideAccess()"
+        class="w-full cursor-pointer bg-orange-400 text-white py-2 rounded-lg font-medium hover:bg-orange-600 transition">
+        Provide Access
+      </button>
+    </div>
+
+    <!-- ❌ Error -->
+    <div *ngIf="state === 'error'">
+      <div class="text-red-500 text-6xl mb-3">❌</div>
+      <h2 class="text-xl font-semibold text-gray-800">Invalid or Expired Link</h2>
+      <p class="text-gray-500 mb-4">Please request a new access link.</p>
+    </div>
+  </div>
+</div>

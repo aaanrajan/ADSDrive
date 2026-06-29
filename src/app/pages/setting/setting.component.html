@@ -1,0 +1,736 @@
+<!-- SETTINGS PAGE -->
+<div class="w-full border-gray-200 bg-white h-[87vh]">
+
+  <!-- 💻 DESKTOP HEADER -->
+  <h3 class="font-medium p-4 sm:block hidden">{{ 'SETTINGS' | translate }}</h3>
+
+  <!-- 📱 MOBILE VIEW -->
+  <div class="block sm:hidden py-4 bg-white rounded-xl">
+    <!-- Show tab list -->
+    <div *ngIf="!mobileActiveTab">
+      <h3 class="font-medium mb-4">{{ 'SETTINGS' | translate }}</h3>
+      <div class="flex flex-col gap-4">
+        <button *ngFor="let tab of tabs"
+          class="flex justify-between items-center border border-gray-300 rounded-lg px-4 py-2 text-left w-full"
+          (click)="onMobileTabSelect(tab.key);activeTab = tab.key">
+          <span class="text-sm text-gray-600">{{ tab.label | translate }}</span>
+          <i class="fas fa-chevron-right text-gray-400"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Show active tab -->
+    <div *ngIf="mobileActiveTab" class="space-y-4">
+      <div class="flex items-center gap-2 mb-3">
+        <i class="fas fa-arrow-left text-gray-500 cursor-pointer" (click)="mobileActiveTab = null"></i>
+        <h3 class="font-medium">{{ getTabLabel(mobileActiveTab) | translate }}</h3>
+      </div>
+
+      <!-- Scrollable container -->
+      <div class="h-full overflow-y-auto no-scrollbar">
+        <ng-container [ngSwitch]="mobileActiveTab">
+          <ng-container *ngSwitchCase="'account'">
+            <ng-container *ngTemplateOutlet="accountContent"></ng-container>
+          </ng-container>
+
+          <ng-container *ngSwitchCase="'manage'">
+            <ng-container *ngTemplateOutlet="manageContent"></ng-container>
+          </ng-container>
+
+          <!-- <ng-container *ngSwitchCase="'appearance'">
+            <ng-container *ngTemplateOutlet="appearanceContent"></ng-container>
+          </ng-container> -->
+
+          <ng-container *ngSwitchCase="'notification'">
+            <ng-container *ngTemplateOutlet="notificationContent"></ng-container>
+          </ng-container>
+
+          <ng-container *ngSwitchCase="'sharing'">
+            <ng-container *ngTemplateOutlet="sharingContent"></ng-container>
+          </ng-container>
+
+          <ng-container *ngSwitchCase="'restore'">
+            <ng-container *ngTemplateOutlet="restoreContent"></ng-container>
+          </ng-container>
+
+          <!-- <ng-container *ngSwitchCase="'plans'">
+            <ng-container *ngTemplateOutlet="plansContent"></ng-container>
+          </ng-container> -->
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+  <!-- 💻 DESKTOP VIEW -->
+  <div class="hidden sm:block">
+    <div class="flex flex-wrap  space-x-6 px-4 py-2 relative">
+      <button class="pb-3 relative transition-colors duration-200 cursor-pointer" [ngClass]="{
+          'text-orange-400 after:content-[\'\'] after:absolute after:bottom-[-2px] after:left-0 after:w-full after:h-[4px] after:bg-orange-400 after:rounded-t-xl':
+            activeTab === 'account',
+          'text-gray-400 hover:text-orange-500': activeTab !== 'account'
+        }" (click)="activeTab = 'account'">
+        {{ 'ACCOUNT_INFORMATION' | translate }}
+      </button>
+
+      <button class="pb-3 relative transition-colors duration-200 cursor-pointer" [ngClass]="{
+          'text-orange-400 after:content-[\'\'] after:absolute after:bottom-[-2px] after:left-0 after:w-full after:h-[3px] after:bg-orange-400 after:rounded-t-xl':
+            activeTab === 'manage',
+          'text-gray-400 hover:text-orange-500': activeTab !== 'manage'
+        }" (click)="activeTab = 'manage';getTotalOccupiedSpace()">
+        {{ 'MANAGE_ACCOUNT' | translate }}
+      </button>
+
+      <!-- <button class="pb-3 relative transition-colors duration-200 cursor-pointer" [ngClass]="{
+          'text-orange-400 after:content-[\'\'] after:absolute after:bottom-[-2px] after:left-0 after:w-full after:h-[3px] after:bg-orange-400 after:rounded-t-xl':
+            activeTab === 'appearance',
+          'text-gray-400 hover:text-orange-500': activeTab !== 'appearance'
+        }" (click)="activeTab = 'appearance'">
+        {{ 'APPEARANCE' | translate }}
+      </button> -->
+
+      <button class="pb-3 relative transition-colors duration-200 cursor-pointer" [ngClass]="{
+          'text-orange-400 after:content-[\'\'] after:absolute after:bottom-[-2px] after:left-0 after:w-full after:h-[3px] after:bg-orange-400 after:rounded-t-xl':
+            activeTab === 'notification',
+          'text-gray-400 hover:text-orange-500': activeTab !== 'notification'
+        }" (click)="activeTab = 'notification'">
+        {{ 'NOTIFICATION' | translate }}
+      </button>
+
+      <button class="pb-3 relative transition-colors duration-200 cursor-pointer" [ngClass]="{
+          'text-orange-400 after:content-[\'\'] after:absolute after:bottom-[-2px] after:left-0 after:w-full after:h-[3px] after:bg-orange-400 after:rounded-t-xl':
+            activeTab === 'sharing',
+          'text-gray-400 hover:text-orange-500': activeTab !== 'sharing'
+        }" (click)="activeTab = 'sharing'">
+        {{ 'SHARING' | translate }}
+      </button>
+
+      <button class="pb-3 relative transition-colors duration-200 cursor-pointer" [ngClass]="{
+          'text-orange-400 after:content-[\'\'] after:absolute after:bottom-[-2px] after:left-0 after:w-full after:h-[3px] after:bg-orange-400 after:rounded-t-xl':
+            activeTab === 'restore',
+          'text-gray-400 hover:text-orange-500': activeTab !== 'restore'
+        }" (click)="activeTab = 'restore';getDays()">
+        {{ 'RESTORE_DATA' | translate }}
+      </button>
+
+      <!-- <button class="pb-3 relative transition-colors duration-200 cursor-pointer" [ngClass]="{
+          'text-orange-400 after:content-[\'\'] after:absolute after:bottom-[-2px] after:left-0 after:w-full after:h-[3px] after:bg-orange-400 after:rounded-t-xl':
+            activeTab === 'plans',
+          'text-gray-400 hover:text-orange-500': activeTab !== 'plans'
+        }" (click)="activeTab = 'plans'">
+        {{ 'PLANS_UPGRADES' | translate }}
+      </button> -->
+    </div>
+
+    <hr class="mx-4 mt-[-6px] border-[1px] border-[#DADADA]" />
+
+    <!-- Desktop Content -->
+    <div class="px-4 py-6 h-full overflow-y-auto md:mb-10">
+      <ng-container [ngSwitch]="activeTab">
+        <ng-container *ngSwitchCase="'account'">
+          <ng-container *ngTemplateOutlet="accountContent"></ng-container>
+        </ng-container>
+        <ng-container *ngSwitchCase="'manage'">
+          <ng-container *ngTemplateOutlet="manageContent"></ng-container>
+        </ng-container>
+        <!-- <ng-container *ngSwitchCase="'appearance'">
+          <ng-container *ngTemplateOutlet="appearanceContent"></ng-container>
+        </ng-container> -->
+        <ng-container *ngSwitchCase="'notification'">
+          <ng-container *ngTemplateOutlet="notificationContent"></ng-container>
+        </ng-container>
+        <ng-container *ngSwitchCase="'sharing'">
+          <ng-container *ngTemplateOutlet="sharingContent"></ng-container>
+        </ng-container>
+        <ng-container *ngSwitchCase="'restore'">
+          <ng-container *ngTemplateOutlet="restoreContent"></ng-container>
+        </ng-container>
+        <!-- <ng-container *ngSwitchCase="'plans'">
+          <ng-container *ngTemplateOutlet="plansContent"></ng-container>
+        </ng-container> -->
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- ✅ Templates -->
+  <ng-template #accountContent>
+    <div class="overflow-y-auto no-scrollbar sm:h-[70vh] md:mb-20">
+<div class="border-2 border-[#DADADA] text-gray-400 shadow-sm rounded-xl p-3 sm:p-6 space-y-5">
+
+  <h2 class="text-base sm:text-lg md:text-xl font-semibold text-gray-800">
+    {{ 'PERSONAL_INFORMATION' | translate }}
+  </h2>
+
+  <!-- PROFILE -->
+  <div class="grid grid-cols-[20%_1fr] gap-3 items-center">
+    <div class="text-xs sm:text-sm md:text-base text-gray-500 font-medium">
+      {{ 'PROFILE' | translate }}
+    </div>
+
+    <div class="flex items-center space-x-4">
+      <ng-container *ngIf="imageUrl; else defaultIcon">
+        <img 
+          [src]="imageUrl" 
+          alt="profile"
+          class="rounded-full w-12 h-12 border object-cover" 
+        />
+      </ng-container>
+
+      <ng-template #defaultIcon>
+        <div class="w-12 h-12 rounded-full border flex items-center justify-center bg-gray-200 text-gray-600">
+          <i class="fas fa-user text-lg"></i>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- USERNAME -->
+  <div class="grid grid-cols-[20%_1fr] gap-3 items-center">
+    <div class="text-xs sm:text-sm md:text-base text-gray-500 font-medium">
+      {{ 'USERNAME' | translate }}
+    </div>
+
+    <div class="text-xs sm:text-sm md:text-base break-all">
+      {{ userName }} {{ lastName }}
+    </div>
+  </div>
+
+  <!-- EMAIL -->
+  <div class="grid grid-cols-[20%_1fr] gap-3 items-center">
+    <div class="text-xs sm:text-sm md:text-base text-gray-500 font-medium">
+      {{ 'E_MAIL' | translate }}
+    </div>
+
+    <div class="text-xs sm:text-sm md:text-base break-all">
+      {{ email }}
+    </div>
+  </div>
+
+  <!-- PASSWORD -->
+  <div class="grid grid-cols-[20%_1fr] gap-3">
+    <div class="text-xs sm:text-sm md:text-base text-gray-500 font-medium">
+      {{ 'PASSWORD' | translate }}
+    </div>
+
+    <button 
+      class="text-orange-400 hover:underline text-xs sm:text-sm md:text-base cursor-pointer text-start"
+      (click)="changePassword()"
+    >
+      {{ 'CHANGE_PASSWORD' | translate }}
+    </button>
+  </div>
+
+</div>
+
+      <div class="border-2 border-[#DADADA] shadow-sm rounded-xl p-6 space-y-3 mt-6 mb-10"
+        *ngIf="!isDesktop; else desktopSettings">
+        <!-- MFA Section -->
+        <div>
+          <!-- Security Settings Section -->
+          <div class="flex md:flex-row items-start md:items-center justify-between gap-4 flex flex-col">
+            <!-- 2FA Info -->
+            <div class="space-y-1 max-w-2xl">
+              <h3 class="text-lg font-medium text-gray-700">{{'TWO_FACTOR_AUTHENTICATION' | translate}}</h3>
+              <p class="text-gray-600 text-sm leading-relaxed">
+                {{'ENHANCE_YOUR_ACCOUNT_SECURITY' | translate}}
+              </p>
+            </div>
+
+            <!-- Switch -->
+            <sl-switch [checked]="isMfaEnabled" (sl-change)="onToggleMfa($event)">
+              {{'ENABLE_MFA' | translate}}
+            </sl-switch>
+          </div>
+
+          <hr class="my-6 border-[#DADADA] hidden" />
+
+          <!-- Delete Account Section -->
+          <div class="flex md:flex-row items-start md:items-center justify-between gap-4 flex flex-col hidden">
+            <div class="space-y-1 max-w-2xl">
+              <h3 class="text-lg font-medium text-gray-700" (click)="removeMfa('WHATSAPP')">{{'DELETE_ACCOUNT' |
+                translate}}</h3>
+              <p class="text-gray-600 text-sm leading-relaxed">
+                {{'THIS_ACTION_WILL_PERMANENTLY' | translate}}
+              </p>
+            </div>
+            <div class="flex   md:flex-row items-start md:items-center justify-between gap-4">
+              <button class="p-1 border-2 rounded-lg text-red-600 cursor-pointer">{{'DELETE_YOUR_ACCOUNT' |
+                translate}}</button>
+            </div>
+          </div>
+
+          <div *ngIf="isMfaEnabled" class="space-y-4">
+            <ng-container *ngIf="getMfaConfigByType('WHATSAPP') as whatsappConfig; else whatsappSetup">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+                <div class="flex items-center gap-2">
+                  <span class="font-medium">{{'WHATSAPP_NUMBER' | translate}}</span>
+                  <span class="text-gray-700">{{ getMaskedContact(whatsappConfig) }}</span>
+                </div>
+              </div>
+            </ng-container>
+
+            <ng-template #whatsappSetup>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="flex flex-col gap-4">
+                  <sl-input label="WhatsApp Phone Number" placeholder="+1234567890" [value]="phoneNumber"
+                    (sl-input)="onPhoneNumberChange($event)">
+                    <sl-icon slot="prefix" name="telephone-inbound" class="pl-2 !text-[#7b7b8d]"></sl-icon>
+                  </sl-input>
+
+                  <button variant="primary" class="w-full md:w-auto bg-orange-400 cursor-pointer text-white font-medium rounded-xl" size="small" (click)="sendOtp()"
+                    [disabled]="!isValidDigits(phoneNumber, 10)">
+                    {{'SEND_OTP' | translate}}
+                  </button>
+                </div>
+
+                <div *ngIf="otpSent" class="flex flex-col gap-4">
+                  <sl-input label="Enter OTP" placeholder="4-digit code" [value]="enteredOtp"
+                    (sl-input)="onOtpChange($event)">
+                    <sl-icon slot="prefix" name="key" class="pl-2 !text-[#7b7b8d]"></sl-icon>
+                  </sl-input>
+
+                  <div class="flex flex-wrap items-center gap-4">
+                    <sl-button variant="success" size="small" (click)="verifyOtp()"
+                      [disabled]="!isValidDigits(enteredOtp, 4)">
+                      {{'VERIFY_OTP' | translate}}
+                    </sl-button>
+                    <p *ngIf="mfaVerified" class="text-green-600 font-medium mb-0">
+                      ✅ {{'MFA_VERIFIED_ENABLED'| translate}}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+      <ng-template #desktopSettings>
+       <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()"
+          class="bg-white rounded-2xl shadow-lg mt-4 border border-slate-200 p-6 space-y-6">
+
+          <!-- Header -->
+          <div>
+            <h2 class="text-2xl font-semibold text-slate-800">
+              Drive Sync Settings
+            </h2>
+            <p class="text-sm text-slate-500 mt-1">
+              Configure your sync preferences and storage options
+            </p>
+          </div>
+
+          <!-- Local Directory -->
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-slate-700">
+              Local Directory
+            </label>
+
+            <div
+              class="flex items-center gap-3 border border-slate-300 rounded-xl px-4 py-3 bg-slate-50">
+
+              <sl-icon name="folder2-open"
+                class="text-orange-500 text-lg"></sl-icon>
+
+              <input type="text" readonly
+                [value]="settingsForm.get('localDirectory')?.value"
+                class="flex-1 bg-transparent outline-none text-sm text-slate-700" />
+
+              <button type="button"
+                (click)="browseFolder()"
+                class="px-4 py-2 rounded-lg bg-orange-400 hover:bg-orange-600 text-white text-sm font-medium transition-all duration-200">
+                {{ 'BROWSE' | translate }}
+              </button>
+            </div>
+
+            <p class="text-xs text-slate-500">
+              Select a directory to sync files
+            </p>
+          </div>
+
+          <!-- Settings Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+            <!-- Sync Frequency -->
+            <div
+              class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+              <label class="block text-sm font-medium mb-2 text-slate-700">
+                Sync Frequency
+              </label>
+
+              <sl-select
+                [value]="settingsForm.get('syncFrequency')?.value"
+                (sl-change)="onSyncFrequencyChange($event)"
+                class="w-full">
+
+                <sl-option value="REALTIME">
+                  {{ 'REAL_TIME' | translate }}
+                </sl-option>
+
+                <sl-option value="HOURLY">
+                  {{ 'HOURLY' | translate }}
+                </sl-option>
+
+                <sl-option value="DAILY">
+                  {{ 'DAILY' | translate }}
+                </sl-option>
+
+              </sl-select>
+            </div>
+
+            <!-- Conflict Resolution -->
+            <div
+              class="bg-slate-50  rounded-xl p-4 border border-slate-200">
+              <label class="block text-sm font-medium mb-2 text-slate-700">
+                Conflict Resolution
+              </label>
+
+              <sl-select
+                [value]="settingsForm.get('conflictResolution')?.value"
+                (sl-change)="onConflictResolutionChange($event)"
+                class="w-full">
+
+                <sl-option value="KEEP_LOCAL">
+                  {{ 'KEEP_LOCAL_FILE' | translate }}
+                </sl-option>
+
+                <sl-option value="KEEP_CLOUD">
+                  {{ 'KEEP_CLOUD_FILE' | translate }}
+                </sl-option>
+
+                <sl-option value="ASK">
+                  {{ 'ASK_EVERY_TIME' | translate }}
+                </sl-option>
+
+              </sl-select>
+            </div>
+
+          </div>
+
+          <!-- Delete Sync -->
+          <div
+            class="flex items-center justify-between border border-slate-200  rounded-xl p-4 bg-slate-50">
+
+            <div>
+              <h4 class="text-sm font-medium text-slate-700">
+                Delete Sync
+              </h4>
+
+              <p class="text-xs text-slate-500 mt-1">
+                Delete cloud file when local file is deleted
+              </p>
+            </div>
+
+            <sl-switch
+              [checked]="settingsForm.get('isDeleteCloud')?.value"
+              (sl-change)="onDeleteSyncChange($event)">
+            </sl-switch>
+          </div>
+
+          <!-- Save Button -->
+          <div class="flex justify-end pt-2">
+            <button
+              type="submit"
+              [disabled]="!settingsForm.valid"
+              class="px-6 py-3 rounded-xl bg-orange-400 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium shadow-md transition-all duration-200">
+
+              {{ 'SAVE_SETTINGS' | translate }}
+
+            </button>
+          </div>
+
+        </form>
+
+      </ng-template>
+    </div>
+  </ng-template>
+
+  <ng-template #manageContent>
+    <div class="border-2 border-[#DADADA] shadow-sm rounded-xl p-6 space-y-5">
+      <!-- Header -->
+      <h2 class="text-lg font-semibold text-gray-800">{{'STORAGE_SUMMARY' | translate}}</h2>
+
+      <!-- Numbers + Storage Bar on same line -->
+      <div class="flex items-center gap-15">
+        <!-- Left: Used storage numbers -->
+        <div class="flex flex-col">
+          <p class="text-gray-600 font-medium">{{'TOTAL_USED' | translate}}</p>
+          <p class="text-2xl text-orange-500">{{ usedStorage }}</p>
+          <p class="text-sm text-gray-500">/ {{ totalStorage }}</p>
+        </div>
+
+        <!-- Right: Storage bar + legend -->
+        <div class="flex-1">
+          <!-- Storage bar -->
+          <p class="text-gray-600 font-medium p-2">{{ usedPercentage }}{{'%USED' | translate}}</p>
+          <div class="flex h-4 overflow-hidden bg-gray-200">
+            <div class="bg-purple-500" [ngStyle]="{ width: storageBreakdown.documents + '%' }"></div>
+            <div class="bg-blue-500" [ngStyle]="{ width: storageBreakdown.videos + '%' }"></div>
+            <div class="bg-fuchsia-500" [ngStyle]="{ width: storageBreakdown.images + '%' }"></div>
+            <div class="bg-pink-400" [ngStyle]="{ width: storageBreakdown.audio + '%' }"></div>
+            <div class="bg-orange-300" [ngStyle]="{ width: storageBreakdown.zip + '%' }"></div>
+            <div class="bg-gray-300" [ngStyle]="{ width: freePercentage + '%' }"></div>
+          </div>
+
+          <!-- Legend -->
+          <div class="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-600">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-sm bg-purple-500"></span> {{'DOCUMENTS' | translate}}
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-sm bg-blue-500"></span> {{'VIDEOS' | translate}}
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-sm bg-fuchsia-500"></span> {{'IMAGES' | translate}}
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-sm bg-pink-400"></span> {{'AUDIO' | translate}}
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-sm bg-orange-300"></span> {{'ZIP' | translate}}
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-sm bg-gray-300"></span> {{'FREE' | translate}}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Free up space button -->
+      <button class="text-orange-500 hover:underline text-sm cursor-pointer">
+        {{'FREE_UP_SPACE' | translate}}
+      </button>
+    </div>
+  </ng-template>
+
+  <!-- <ng-template #appearanceContent>
+    <div class="border-2 border-[#DADADA] shadow-sm rounded-xl p-6">Under construction</div>
+  </ng-template> -->
+
+  <ng-template #notificationContent>
+    <div class="border-2 border-[#DADADA] shadow-sm rounded-xl p-4">
+      <h3 class="mb-4 font-semibold">{{'EMAIL_ME_WHEN' | translate}}</h3>
+
+      <!-- Loop through checkbox list -->
+      <div class="flex flex-col gap-3">
+        <label *ngFor="let item of notificationKeys; let i = index" class="flex items-center gap-3 cursor-pointer">
+          <!-- Hidden native checkbox for accessibility -->
+          <input type="checkbox" [(ngModel)]="notificationSettings[item]"
+            class="accent-orange-600 text-white w-4 h-4 cursor-pointer rounded">
+
+          <!-- Label text -->
+          <span class="text-sm">{{ notificationOptions[i] }}</span>
+        </label>
+
+        <!-- Action buttons -->
+        <div class="flex gap-3 justify-end mt-4">
+          <button type="button" (click)="saveNotificationSettings()"
+            class="bg-orange-500 hover:bg-orange-600 text-white rounded-lg px-4 py-1 transition-colors cursor-pointer">
+            {{'SAVE' | translate}}
+          </button>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template #sharingContent>
+    <div class="border-2 border-[#DADADA] shadow-sm rounded-xl p-6 space-y-5 flex flex-col">
+      <!-- Heading -->
+      <div>
+        <h3 class="text-lg font-medium text-gray-700">{{'DEFAULT_SHARING_SETTINGS' | translate}}</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">
+          {{'SET_YOUR_PREFERRED_DEFAULT' | translate}}
+        </p>
+      </div>
+
+      <!-- Who has access -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <h3 class="text-base font-medium text-gray-700">{{'WHO_HAS_ACCESS'| translate}}</h3>
+        <div class="relative w-full sm:w-[250px]" #accessDropdown>
+          <button (click)="open = !open" class="w-full flex justify-between items-center px-2 py-2.5 text-sm font-medium
+                   border border-gray-300 bg-white rounded-lg shadow-sm cursor-pointer
+                   hover:border-orange-400 transition-all duration-200">
+            <span class="text-gray-700">{{ selectedAccessLabel }}</span>
+            <i class="fas" [ngClass]="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+          </button>
+        
+          <div *ngIf="open"
+            class="absolute left-0 right-0 mt-1 bg-white shadow-xl rounded-lg border border-gray-200 z-50 animate-fadeIn">
+        
+            <div *ngFor="let option of accessOptions" (click)="selectOption(option)"
+              class="flex justify-between items-center px-2 py-2.5 text-sm cursor-pointer rounded-md transition duration-150"
+              [ngClass]="{
+                    'bg-orange-500 text-white shadow-sm': selectedAccess === option.value,
+                    'hover:bg-gray-100': selectedAccess !== option.value 
+                 }">
+        
+              <span>{{ option.label }}</span>
+        
+              <!-- Check Icon -->
+              <i *ngIf="selectedAccess === option.value" class="fas fa-check text-white text-sm"></i>
+            </div>
+        
+          </div>
+        </div>
+      </div>
+      <p class="text-gray-600 text-sm leading-relaxed">
+        {{'CHOOSE_WHO_HAS_ACCESS_DEFAULT' | translate}}
+      </p>
+
+      <!-- What people can do -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <h3 class="text-base font-medium text-gray-700">{{'WHAT_PEOPLE_CAN_DO' | translate}}</h3>
+        <div class="relative w-full sm:w-[250px]" #permissionDropdown>
+          <button (click)="openPermission = !openPermission"
+            class="w-full flex justify-between items-center px-4 py-2 text-sm font-medium border border-gray-400 rounded-md cursor-pointer hover:border-orange-400">
+            {{ selectedPermissionLabel }}
+            <i class="fas fa-chevron-down text-gray-600"></i>
+          </button>
+        
+          <!-- Dropdown list -->
+          <div *ngIf="openPermission" class="absolute mt-1 w-full bg-white shadow-lg rounded-md border border-gray-200 z-50">
+        
+            <div *ngFor="let option of permissionOptions" (click)="selectPermission(option)"
+              class="flex justify-between items-center px-1 py-2 text-sm cursor-pointer rounded-md" [ngClass]="{
+                    'bg-orange-500 text-white': selectedPermission === option.value,
+                    'hover:bg-orange-100': selectedPermission !== option.value
+                 }">
+        
+              <span>{{ option.label }}</span>
+        
+              <i *ngIf="selectedPermission === option.value" class="fas fa-check text-white text-sm"></i>
+            </div>
+        
+          </div>
+        </div>
+      </div>
+      <p class="text-gray-600 text-sm leading-relaxed">
+        {{'CHOOSE_WHETHER_PEOPLE_CAN_EDIT_OR_ONLY_VIEW_BY_DEFAULT' | translate}}
+      </p>
+
+      <!-- Save & Cancel Buttons -->
+      <div class="flex justify-end gap-3 pt-4">
+        <button class="bg-orange-500 text-white rounded-[8px] px-4 py-2 text-sm cursor-pointer"
+          (click)="saveNotificationConfigure()">
+          {{'SAVE' | translate}}
+        </button>
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template #restoreContent>
+    <div class="border-2 border-[#DADADA] shadow-sm rounded-xl p-6 space-y-4">
+      <h3 class="text-lg font-medium text-gray-700">{{'FILE_RECOVERY_DURATION' | translate}}</h3>
+      <p class="text-gray-800">
+        {{'DELETED_DAYS' | translate}}
+      </p>
+
+      <div class="relative inline-flex items-center border rounded-md w-25">
+        <input type="number" min="1" max="30" [(ngModel)]="deleteAfterDays" (input)="onDeleteDaysChange($event)"
+          class="w-full font-medium text-gray-500 pl-3 pr-1 py-2 outline-none border-0 rounded-md focus:ring-2 focus:ring-orange-400 appearance-none cursor-pointer" />
+        <span class="absolute right-7 font-medium text-gray-500">{{'DAYS' | translate}}</span>
+      </div>
+    </div>
+  </ng-template>
+  
+  <ng-template #plansContent>
+    <div class="border-2 border-[#DADADA] shadow-xl rounded-xl h-full sm:h-[70vh] overflow-y-auto">
+      <h3 class="p-6 font-semibold">Choose your plan</h3>
+  
+      <div class="p-2 md:px-[18px] sm:relative pb-[15px]">
+        <!-- Scrollable Area -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 
+              border-0 md:border-2 md:border-yellow-400 
+              p-8 rounded-xl md:shadow-sm">
+  
+  
+          <!-- Free Plan -->
+          <div class="rounded-xl p-6 shadow-md bg-white hover:shadow-2xl hover:-translate-y-2 hover:scale-[1.03] 
+                transition-all duration-300 cursor-pointer">
+  
+            <h2 class="text-xl text-orange-400 font-semibold mb-2">Free Plan</h2>
+            <p class="text-gray-500 mb-4">Perfect for personal use</p>
+  
+            <p class="text-3xl font-bold mb-4">
+              0 ₹ <span class="text-base font-medium text-gray-600">/ month</span>
+            </p>
+  
+            <button class="w-full bg-orange-400 hover:bg-orange-600 text-white py-2 rounded-lg mb-5">
+              Get Ads Drive for Free
+            </button>
+  
+            <ul class="space-y-2 text-gray-700">
+              <li>• 5 GB Cloud Storage</li>
+              <li>• Basic File Sharing</li>
+              <li>• Web Access</li>
+              <li>• Upload & Download Anytime</li>
+              <li>• No Advanced Features</li>
+            </ul>
+  
+          </div>
+  
+  
+          <!-- Plus Plan -->
+          <div class="rounded-xl p-6 shadow-md bg-white hover:shadow-2xl hover:-translate-y-2 hover:scale-[1.03] 
+                transition-all duration-300 cursor-pointer">
+  
+            <h2 class="text-xl text-orange-400 font-semibold mb-2">Plus Plan</h2>
+            <p class="text-gray-500 mb-4">Ideal for students and professionals</p>
+  
+            <p class="text-3xl font-bold mb-4">
+              499 ₹ <span class="text-base font-medium text-gray-600">/ month</span>
+            </p>
+  
+            <button class="w-full bg-orange-400 hover:bg-orange-600 text-white py-2 rounded-lg mb-5">
+              Get Ads Drive Plus
+            </button>
+  
+            <ul class="space-y-2 text-gray-700">
+              <li>• 10 GB Cloud Storage</li>
+              <li>• Share Files with Expiry Links</li>
+              <li>• Create & Organize Folders</li>
+              <li>• Sync Across Multiple Devices</li>
+              <li>• Faster Upload Speeds</li>
+              <li>• Standard Customer Support</li>
+              <li>• No Collaboration Tools</li>
+            </ul>
+  
+          </div>
+  
+  
+          <!-- Premium Plan -->
+        <div
+    class="sm:absolute sm:top-[-25px] sm:right-[45px] w-full md:w-[300px]
+           rounded-xl p-6 shadow-xl bg-orange-400 text-white z-10
+           hover:shadow-2xl hover:-translate-y-2 hover:scale-[1.03]
+           transition-all duration-300 cursor-pointer">
+            <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-3 py-1 rounded-full">
+              ★ Recommended
+            </span>
+  
+            <h2 class="text-xl font-semibold mb-2">Premium Plan</h2>
+            <p class="mb-4">Best for businesses and power users</p>
+  
+            <p class="text-3xl font-bold mb-4">
+              999 ₹ <span class="text-base font-medium">/ month</span>
+            </p>
+  
+            <button class="w-full bg-white hover:bg-orange-600 hover:text-white text-orange-400 py-2 rounded-lg mb-5">
+              Get Ads Drive Premium
+            </button>
+  
+            <ul class="space-y-2">
+              <li>• 20 GB Cloud Storage</li>
+              <li>• End-to-End File Encryption</li>
+              <li>• Multi-User Access with Roles</li>
+              <li>• File Version History + Recovery</li>
+              <li>• Advanced Folder Permissions</li>
+              <li>• Real-Time Auto Sync</li>
+              <li>• 24/7 Priority Support</li>
+            </ul>
+  
+          </div>
+  
+        </div>
+      </div>
+  
+    </div>
+  </ng-template>
+</div>
