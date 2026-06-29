@@ -1,0 +1,513 @@
+<div class="flex flex-col min-h-screen bg-[#F5F7FB]">
+  <div class="flex flex-1 relative min-h-[99vh]">
+    <div *ngIf="mobileMenuOpen" class="fixed inset-0 z-[9999]">
+
+      <!-- BACKDROP -->
+      <div class="absolute inset-0 bg-black/40" (click)="closeMobileMenuWithAnimation()">
+      </div>
+
+      <!-- SIDEBAR PANEL -->
+      <div #mobileMenuRef class="absolute top-0 left-0 w-[85vw] h-full bg-orange-400 rounded-r-[20px] 
+           shadow-lg p-4 flex flex-col justify-between transition-transform duration-300" [ngClass]="{
+      'translate-x-0': sidebarVisible,
+      '-translate-x-full': !sidebarVisible
+    }">
+
+        <ng-container *ngTemplateOutlet="sidebarContent"></ng-container>
+      </div>
+    </div>
+
+    <aside #sidebarRef class="hidden sm:flex flex-col bg-gray-50 duration-300
+         h-screen relative overflow-hidden
+         transition-[width] will-change-[width]" [ngClass]="{
+        'w-15 items-center absolute  z-50 shadow-lg': isCollapsed && isOverlay,
+        'w-15 items-center relative  shadow-lg': isCollapsed && !isOverlay,
+        'w-60 absolute  h-full z-100 shadow-lg border border-gray-200 rounded': !isCollapsed && isOverlay,
+        'w-80 relative ml-5 z-50': !isCollapsed && !isOverlay
+    }">
+
+      <!-- Logo -->
+      <div class="flex items-center gap-2 px-3 py-4 cursor-pointer hover:bg-gray-100 transition">
+        <img src="assets/d_logo.png" class="object-contain" [ngStyle]="!isCollapsed ? { width: '27%' } : {}" />
+
+        <span *ngIf="!isCollapsed" class="text-2xl font-semibold text-[#FF7E00]" style="margin-top: 8px;">
+          D
+        </span>
+        <span *ngIf="!isCollapsed" class="text-2xl font-semibold" style="margin-top: 8px; margin-left: -7px;">
+          rive
+        </span>
+      </div>
+
+      <div #sidebarToggle *ngIf="showArrow" (click)="toggleSidebar()"
+        class="flex items-center gap-2 px-3 py-4 cursor-pointer hover:bg-gray-100 transition" title='Show Names'>
+
+        <svg *ngIf="isCollapsed" width="18" height="18" viewBox="0 0 18 18" fill="none"
+          xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M16.875 2.25V15.75L15.75 16.875H2.25L1.125 15.75V2.25L2.25 1.125H15.75L16.875 2.25ZM7.875 15.75H15.75V2.25H7.875V15.75Z"
+            fill="#4F4E50" />
+          <path
+            d="M14.6251 8.43756H10.9204L12.2097 7.14831L11.4143 6.35181L9.16431 8.60181V9.39831L11.4143 11.6483L12.2097 10.8518L10.9216 9.56256H14.6251V8.43756Z"
+            fill="#4F4E50" />
+        </svg>
+      </div>
+
+      <!-- Menu -->
+      <div *ngFor="let group of menuItems" class="mt-4 flex-1">
+        <div *ngIf="!isCollapsed" class="text-gray-400 text-xs font-semibold px-3">
+          {{ group.label }}
+        </div>
+
+        <div class="flex flex-col gap-1 mt-2">
+          <a *ngFor="let item of group.children" [routerLink]="item.path" routerLinkActive="bg-orange-400 text-white"
+            class="flex items-center px-3 py-2 rounded-lg text-gray-600 hover:bg-orange-100 transition"
+            [title]="isCollapsed ? item.label : ''">
+            <i class="fas" [ngClass]="item.icon"></i>
+            <span *ngIf="!isCollapsed" class="ml-3">{{ item.label }}</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Available Storage Block -->
+      <div class="p-4 mt-20 border-t border-gray-200">
+        <!-- Collapsed -->
+        <div *ngIf="isCollapsed" class="flex flex-col items-center">
+          <div class="w-8 h-8 flex items-center justify-center bg-white shadow rounded-lg mb-3">
+            <i class="fas fa-gem text-orange-500 text-3xl"></i>
+          </div>
+          <div class="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
+            <div class="h-full bg-orange-500 transition-all duration-300" [style.width.%]="usagePercent"></div>
+          </div>
+        </div>
+
+        <!-- Expanded -->
+        <div *ngIf="!isCollapsed" class="p-3 border border-gray-200 rounded-md bg-white">
+          <div class="flex justify-between items-center mb-2 text-xs font-medium text-gray-700">
+            <span>Available Storage</span>
+            <span>{{ usagePercent }}%</span>
+          </div>
+          <div class="w-full h-2 rounded-full bg-gray-200 overflow-hidden mb-1">
+            <div class="h-full bg-orange-500 transition-all duration-300" [style.width.%]="usagePercent"></div>
+          </div>
+          <div class="text-xs text-gray-500 mb-3">{{ usageLabel }}</div>
+          <button class="w-full bg-black text-white py-2 rounded-md hover:opacity-90 transition text-xs cursor-pointer"
+            (click)="gotoUpgrade()">
+            Upgrade to Pro
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Mobile Drawer -->
+
+
+    <!-- Main Content -->
+    <div class=" rounded-md border border-gray-200 bg-white w-full">
+      <nav
+        class="py-4 px-2 fixed w-full z-10 sm:static sm:top-auto sm:left-auto bg-white  md:mt-0 flex items-center justify-between gap-4 border-b border-gray-200 sm:border-0">
+        <!-- Search Box -->
+
+        <div class="relative w-full max-w-sm">
+          <div class="flex items-center gap-2">
+
+            <!-- Mobile: Profile icon first + ADS Drive name -->
+            <div class="flex items-center gap-2 sm:hidden" *ngIf="!showMobileSearch">
+              <!-- Mobile Profile Icon -->
+              <div (click)="toggleMobileMenu()"
+                class="w-9 h-9 rounded-full border border-[#00000030] shadow-sm overflow-hidden cursor-pointer">
+                <img *ngIf="profileImageUrl" [src]="profileImageUrl" class="w-full h-full object-cover" />
+                <div *ngIf="!profileImageUrl" class="flex items-center justify-center h-full bg-gray-200 text-gray-500">
+                  <i class="fas fa-user text-sm"></i>
+                </div>
+              </div>
+
+              <!-- ADS Drive name -->
+              <span class="font-semibold text-orange-400 text-base">ADS DRIVE</span>
+            </div>
+
+
+          </div>
+          <div class="sm:flex" [class.hidden]="!showMobileSearch" #searchBox>
+            <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+              <i class="fas fa-search"></i>
+            </div>
+            <input type="text" placeholder="Search..." [(ngModel)]="searchText" (input)="searchFiles()"
+              class="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-md text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-300" />
+          </div>
+          <!-- Search Results -->
+          <div *ngIf="showDropdown && searchFile.length > 0"
+            class="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-65 overflow-auto">
+            <ul>
+              <li *ngFor="let file of searchFile" (click)="openLocation(file)"
+                class="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm text-gray-700">
+                <i *ngIf="file.isFolder; else fileIcon" class="fas fa-folder text-yellow-500"></i>
+                <ng-template #fileIcon><i class="fas fa-file text-gray-400"></i></ng-template>
+                <div>
+                  <div class="font-medium">{{ file.itemName }}</div>
+                  <div class="text-xs text-gray-500">
+                    <ng-container *ngIf="!file.isFolder">{{ formatSize(file.size) }} •</ng-container>
+                    {{ formatLocation(file.location) }}
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div *ngIf="!isSearching && searchText && searchFile.length === 0"
+            class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md p-3 text-sm text-gray-500">
+            No results found
+          </div>
+        </div>
+
+        <!-- Profile + Settings -->
+        <div class="flex text-lg text-gray-500 items-center gap-4 relative" #profileMenu>
+          <!-- Profile Icon -->
+          <div class="flex items-center gap-3">
+
+            <!-- Mobile search icon only -->
+            <button class="text-gray-500 hover:text-orange-500 sm:hidden" (click)="toggleSearchBox()">
+              <i class="fas text-lg"
+                [ngClass]="{ 'fa-search': !showMobileSearch, 'fa-times text-red-500': showMobileSearch }"></i>
+            </button>
+          </div>
+          <div #openDriveContainer class="openDriveoptions hidden sm:flex">
+            <div (click)="openDriveOption()">
+              <svg xmlns="http://www.w3.org/2000/svg" class="cursor-pointer fill-grey-100" width="20" height="20"
+                viewBox="0 0 24 24">
+                <path
+                  d="M5 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM5 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM5 17a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" />
+              </svg>
+            </div>
+
+            <!-- Dropdown -->
+             
+  
+
+          <div *ngIf="openDrive"
+                class="absolute right-[100px] top-[20px] mt-2 w-[320px] bg-white  border border-slate-200  rounded-xl shadow-xl z-50 overflow-hidden">
+
+                <div class="max-h-[400px] overflow-y-auto p-3 space-y-4">
+
+                  <div *ngFor="let group of groupedProducts">
+
+                    <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 border-b border-gray-200 pb-1">
+                      {{ group.title }}
+                    </h3>
+
+                    <div class="grid grid-cols-3 gap-2">
+
+                      <div
+                        *ngFor="let product of group.products"
+                        class="bg-slate-50 hover:bg-slate-100 rounded-lg p-2 cursor-pointer transition flex flex-col items-center text-center"
+                        [title]="product.description"
+                        (click)="openExternalProduct(product)"
+                      >
+
+                        <img
+                          [src]="product.appLogo"
+                          [alt]="product.appName"
+                          class="w-10 h-10 object-contain mb-1"
+                        />
+
+                        <div class="text-[11px] font-medium text-slate-700 leading-tight">
+                          {{ product.appName }}
+                        </div>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                </div>
+                        </div>
+              </div>
+          <!-- Notification Bell Icon (in your nav section) -->
+          <div class="relative" #notificationMenu>
+            <a class="relative flex items-center justify-center
+                     w-10 h-10
+                     rounded-full
+                     cursor-pointer" (click)="toggleNotificationDropdown()">
+              <!-- Bell icon -->
+              <i class="fas fa-bell text-[18px]"></i>
+            
+              <!-- Notification badge -->
+              <span class="absolute
+                       top-[1px] right-[5px]
+                       min-w-[18px] h-[18px]
+                       px-[5px]
+                       bg-red-600 text-white
+                       text-[11px] font-bold
+                       rounded-full
+                       flex items-center justify-center
+                       leading-none">
+                {{ count }}
+              </span>
+            </a>
+            <div *ngIf="showNotificationDropdown"
+              class="absolute right-0 top-12 w-[350px] sm:w-96 bg-white border border-gray-200 rounded-lg shadow-2xl z-50 overflow-hidden max-h-[450px]">
+          
+              <app-notification (closePanel)="closeNotificationPanel()"></app-notification>
+            </div>
+          </div>
+
+          <!-- Profile Image -->
+          <div class="hidden sm:flex">
+
+            <div
+              class="w-9 h-9 rounded-full border border-[#00000030] shadow-sm overflow-hidden cursor-pointer  border-text[#00000030]"
+              (click)="toggleProfileDropdown()">
+              <img *ngIf="profileImageUrl" [src]="profileImageUrl" class="w-full h-full object-cover" />
+              <div *ngIf="!profileImageUrl" class="flex items-center justify-center h-full bg-gray-200 text-gray-500">
+                <i class="fas fa-user text-sm"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dropdown -->
+          <div *ngIf="showProfileDropdown"
+            class="absolute right-0 top-12 w-80 bg-white border border-gray-200 rounded-md shadow-2xl z-50 p-5 transition-all">
+            <!-- Profile Header -->
+            <div class="flex flex-col items-center text-center  pb-4">
+              <div class="w-16 h-16 rounded-full overflow-hidden mb-2 border">
+                <img *ngIf="profileImageUrl" [src]="profileImageUrl" class="w-full h-full object-cover" />
+                <div *ngIf="!profileImageUrl" class="flex items-center justify-center h-full bg-gray-200 text-gray-500">
+                  <i class="fas fa-user text-lg"></i>
+                </div>
+              </div>
+              <h2 class="font-semibold  text-[#474747] text-base mb-2">{{ fullName  }}</h2>
+              <p class="text-sm text-[#777674]  font-semibold">{{ email }}</p>
+            </div>
+
+                <div class="mb-2 bg-orange-300 text-sm rounded" *ngIf="!isElectron">
+
+  <!-- SHOW HEADER ONLY IF SESSIONS EXIST -->
+  <div *ngIf="otherSessions.length > 0"
+       class="flex justify-between items-center px-2 py-2 bg-orange-400 text-white  rounded cursor-pointer hover:bg-gray-100 hover:text-orange-400"
+       (click)="toggleSwitch(); $event.stopPropagation()">
+
+    <span class="font-medium">Switch account</span>
+
+   <span
+      class="fas"
+      [ngClass]="isSwitchOpen ? 'fa-chevron-up' : 'fa-chevron-down'">
+    </span>
+  </div>
+
+  <!-- BODY -->
+  <div *ngIf="isSwitchOpen && otherSessions.length > 0" class="p-2  mt-1">
+
+    <!-- ACCOUNT LIST -->
+    <div *ngFor="let session of otherSessions; trackBy: trackBySession"
+         class="flex items-center px-2 py-2 text-white rounded cursor-pointer hover:bg-gray-100 hover:text-orange-400"
+         (click)="switchAccount(session)">
+
+      <div class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-300 text-sm font-medium mr-2">
+        {{ session.fullName?.charAt(0) }}
+      </div>
+
+      <div class="flex-1 min-w-0">
+        <div class="font-medium truncate">
+          {{ session.fullName }}
+        </div>
+        <div class="text-gray-500 text-sm truncate">
+          {{ session.email }}
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ALWAYS SHOW ADD ACCOUNT -->
+  <div *ngIf="isSwitchOpen"
+       class="flex items-center m-2 p-2 rounded cursor-pointer text-white hover:bg-gray-100  hover:text-orange-400"
+       (click)="addAccount()">
+
+    <div class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-300 text-sm font-medium mr-2">
+      +
+    </div>
+
+    <span class="font-medium">Add another account</span>
+
+  </div>
+
+</div>
+            <p class=" text-sm text-gray-400 ">
+              Your account has {{ totalStorage }} storage
+            </p>
+
+            <!-- Buttons -->
+            <!-- <button class="text-sm cursor-pointer text-orange-500 font-semibold text- text-decoration-line: underline" (click)="gotoUpgrade()">
+              Upgrade
+            </button> -->
+            <div class="py-3 border-t  border-gray-300 my-3">
+
+              <button
+                class="w-full flex items-center cursor-pointer gap-1 text-gray-600 text-sm  mt-1 mb-1  rounded-lg transition">
+                Manage account
+              </button>
+
+              <!-- <button
+                class="w-full flex items-center gap-25 cursor-pointer  text-gray-600 text-sm  py-1 rounded-lg transition">
+
+                Install desktop app <span><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke-width="1.5" stroke="currentColor" class="size-4">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                  </svg></span>
+
+              </button> -->
+            </div>
+            
+
+            <!-- Sign Out -->
+            <button (click)="handlePostLogoutSession()"
+              class="w-full bg-white cursor-pointer text-base border border-[#FF7E00] text-[#FF7E00] font-semibold py-1 rounded-lg hover:bg-orange-500 hover:text-white transition-all ">
+              Sign out
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <main (click)="closeMobileMenu($event)" class="flex-1 px-2 sm:px-4 pt-20 sm:pt-0 overflow-auto h-screen  sm:h-auto">
+        <router-outlet></router-outlet>
+      </main>
+    </div>
+  </div>
+
+  <!-- Sidebar Reusable Content for Mobile -->
+  <ng-template #sidebarContent>
+    <div id="mobile-menu" class="absolute top-0 left-0 w-[80vw] md:w-[300px] h-full z-50  flex flex-col">
+
+      <!-- Scrollable content -->
+      <div class="flex-1 p-2">
+
+        <!-- Profile (mobile only) -->
+        <div
+          class="flex sm:hidden ml-1 mb-4 items-center bg-white rounded-md border-l-4 border-stone-700 p-2 shadow-sm max-w-[300px]">
+          <!-- Profile image -->
+          <div class="w-12 h-12 rounded-full overflow-hidden border flex-shrink-0">
+            <img *ngIf="profileImageUrl" [src]="profileImageUrl" class="w-full h-full object-cover" />
+            <div *ngIf="!profileImageUrl" class="flex items-center justify-center h-full bg-gray-200 text-gray-500">
+              <i class="fas fa-user text-lg"></i>
+            </div>
+          </div>
+
+          <!-- Name & Email -->
+          <div class="ml-4 flex-1 min-w-0">
+            <h2 class="font-semibold text-[#474747] text-base mb-1 truncate" title="{{ fullName }}">
+              {{ fullName }}
+            </h2>
+            <p class="text-sm text-[#777674] font-semibold truncate" title="{{ email }}">
+              {{ email }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Menu Items -->
+        <ng-container *ngFor="let menuItem of menuItems; let last = last">
+          <!-- Menu Header -->
+          <!-- <div class="pt-3 text-white px-1">
+            <span class="text-xl font-semibold">{{ menuItem.label }}</span>
+          </div> -->
+
+          <!-- Menu Links -->
+          <div class="flex flex-col justify-between py-2">
+            <div class="flex text-lg text-white flex-col gap-1">
+              <ng-container *ngFor="let item of menuItem.children">
+                <a [routerLink]="item.path" (click)="closeMobileMenuWithAnimation()"
+                  routerLinkActive="bg-white border-l-4 border-stone-700 text-orange-400"
+                  class="flex items-center px-4 py-2 rounded-lg hover:bg-orange-100">
+                  <span class="pr-2"><i class="fas" [ngClass]="item.icon"></i></span>
+                  {{ item.label }}
+                </a>
+              </ng-container>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div *ngIf="!last" class="border-b border-white my-2"></div>
+        </ng-container>
+
+        <div class="flex sm:hidden flex-col justify-between">
+          <div class="flex text-lg text-white flex-col gap-1">
+            <a (click)="openLogoutModal()" class="flex items-center px-4 py-2 rounded-lg hover:bg-red-500">
+              <span class="pr-2"><i class="fas fa-power-off"></i></span>
+              Log out
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom storage + button -->
+      <div class="p-4 bg-orange-400 flex flex-col gap-3">
+        <!-- Storage Info -->
+        <div class="p-3 border border-gray-200 rounded-md bg-white">
+          <div class="flex justify-between items-center mb-2 text-xs font-medium text-gray-700">
+            <span>Available Storage</span>
+            <span>{{ usagePercent }}%</span>
+          </div>
+          <div class="w-full h-2 rounded-full bg-gray-200 overflow-hidden mb-1">
+            <div class="h-full bg-orange-500 transition-all duration-300" [style.width.%]="usagePercent"></div>
+          </div>
+          <div class="text-xs text-gray-500 mb-3">{{ usageLabel }}</div>
+        </div>
+
+        <!-- Upgrade Button -->
+        <button class="w-full bg-black text-white py-2 rounded-md hover:opacity-90 transition text-xs">
+          Upgrade to Pro
+        </button>
+      </div>
+
+    </div>
+
+  </ng-template>
+      <!-- LOGOUT CONFIRMATION MODAL -->
+      <div *ngIf="showLogoutModal" class="fixed inset-0 z-[9999] flex items-center justify-center">
+      
+        <!-- BACKDROP -->
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" (click)="closeLogoutModal()"></div>
+      
+        <!-- MODAL BOX -->
+        <div class="relative bg-white w-[90%] max-w-md rounded-2xl shadow-2xl p-6 animate-fadeIn">
+      
+          <!-- ICON -->
+          <div class="flex items-center justify-center mb-4">
+            <div class="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center">
+              <i class="fas fa-sign-out-alt text-orange-500 text-xl"></i>
+            </div>
+          </div>
+      
+          <!-- TITLE -->
+          <h2 class="text-lg font-semibold text-center text-gray-800">
+            Confirm Logout
+          </h2>
+      
+          <!-- MESSAGE -->
+          <p class="text-sm text-gray-500 text-center mt-2">
+            Are you sure you want to logout from ADS Drive?
+          </p>
+      
+          <!-- BUTTONS -->
+          <div class="flex gap-3 mt-6">
+      
+            <!-- Cancel -->
+            <button (click)="closeLogoutModal()"
+              class="flex-1 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition">
+              Cancel
+            </button>
+      
+            <!-- Logout -->
+            <button (click)="confirmLogout()"
+              class="flex-1 py-2 rounded-lg bg-orange-500 text-white font-semibold hover:bg-orange-600 transition">
+              Logout
+            </button>
+      
+          </div>
+        </div>
+      </div>
+
+</div>
+
+<app-switch-handler #switchHandler></app-switch-handler>
