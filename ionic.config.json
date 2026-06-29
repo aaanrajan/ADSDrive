@@ -1,0 +1,7 @@
+{
+  "name": "ads-drive",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
