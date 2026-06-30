@@ -1,0 +1,36 @@
+<div class="dashboard">
+    <h1>ADSDrive Dashboard</h1>
+
+    <p class="mode" *ngIf="isElectron; else webMode">Mode: Desktop (Electron)</p>
+    <ng-template #webMode>
+        <p class="mode">Mode: Web</p>
+    </ng-template>
+
+    <div class="actions">
+        <button (click)="selectFolder()">Select Sync Folder</button>
+        <button (click)="manualSync()" [disabled]="!syncFolder">Sync Now</button>
+    </div>
+
+    <p *ngIf="syncFolder"><strong>Folder:</strong> {{ syncFolder }}</p>
+    <p *ngIf="message">{{ message }}</p>
+    <p *ngIf="loading">Loading files...</p>
+
+    <table *ngIf="files.length > 0">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Size</th>
+                <th>Status</th>
+                <th>Modified</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let f of files">
+                <td>{{ f.itemName }} <span *ngIf="f.isFolder">(Folder)</span></td>
+                <td>{{ formatSize(f.size) }}</td>
+                <td>{{ f.syncStatus }}</td>
+                <td>{{ f.modifiedDate | date:'medium' }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>

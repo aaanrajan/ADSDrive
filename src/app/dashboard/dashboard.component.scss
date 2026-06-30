@@ -1,0 +1,33 @@
+.dashboard {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+button {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  background: #f5f5f5;
+  cursor: pointer;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+th, td {
+  border-bottom: 1px solid #e6e6e6;
+  padding: 8px;
+  text-align: left;
+}
+
+.mode {
+  color: #666;
+}
