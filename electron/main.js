@@ -1,20 +1,35 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Notification } = require('electron');
 const path = require('path');
-const SqliteService = require('./electron/sqlite-service');
-const SyncService = require('./electron/sync-service');
-const { startWatcher } = require('./electron/file-watcher');
-const ConfigService = require('./electron/config-service');
+const SqliteService = require('./services/sqlite-service');
+const FileWatcherService = require('./services/file-watcher');
+const SyncService = require('./services/sync-service');
+const CloudService = require('./services/cloud-service');
+const TrayService = require('./services/tray-service');
 
 let mainWindow;
-let syncService;
-const sqliteService = SqliteService();
-const configService = ConfigService();
+const sqlite = new SqliteService();
+let watcher = null;
+let sync = null;
+let trayService = null;
+let syncInterval = null;
+let appConfig = null;
 
-// Create main window
+function notify(title, body) {
+  if (Notification.isSupported()) {
+    new Notification({ title, body }).show();
+  }
+}
+
+function sendToRenderer(channel, payload) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send(channel, payload);
+  }
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1280,
+    height: 850,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -23,63 +38,82 @@ function createWindow() {
   });
 
   const isDev = !app.isPackaged;
-  if (isDev) {
-    mainWindow.loadURL('http://localhost:4200');
-    mainWindow.webContents.openDevTools();
-  } else {
-    mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
-  }
+  const devUrl = process.env.WEB_DEV_URL || 'http://localhost:4200';
+  if (isDev) mainWindow.loadURL(devUrl);
+  else mainWindow.loadFile(path.join(__dirname, '../web/dist/index.html'));
 }
 
-// Initialize app
-app.whenReady().then(() => {
-  // Initialize database
-  sqliteService.initializeDb();
+async function startInfra(config) {
+  appConfig = config;
+  if (!config?.folderPath) return;
 
-  // Create window
+  if (!watcher) watcher = new FileWatcherService(sqlite, (e) => sendToRenderer('fs-event', e));
+
+  const cloud = new CloudService(config.apiUrl || 'https://your-api-url.com', async () => config.token || null);
+  sync = new SyncService(
+    sqlite,
+    cloud,
+    (e) => {
+      sendToRenderer('fs-event', e);
+      if (e.type === 'SYNC_COMPLETED') trayService?.setStatus('Up to date');
+      if (e.type === 'SYNC_FAILED') trayService?.setStatus('Error');
+      if (e.type === 'SYNC_CONFLICT') trayService?.setStatus('Conflict');
+    },
+    notify
+  );
+
+  await watcher.start(config.folderPath);
+  trayService?.setStatus('Watching');
+
+  if (syncInterval) clearInterval(syncInterval);
+  syncInterval = setInterval(async () => {
+    trayService?.setStatus('Syncing...');
+    await sync.runOnce(config.userId);
+  }, 5 * 60 * 1000);
+}
+
+app.whenReady().then(async () => {
+  await sqlite.init();
   createWindow();
 
-  // Initialize sync service
-  syncService = new SyncService('https://your-api-url.com');
+  trayService = new TrayService(app, () => mainWindow, async () => {
+    trayService.setStatus('Syncing...');
+    const res = await sync?.runOnce(appConfig?.userId);
+    if (res?.success) notify('ADSDrive', 'Manual sync completed');
+  });
+  trayService.create();
 
-  // Load saved configuration
-  const config = configService.loadConfig();
-  if (config && config.userId && config.folderPath) {
-    // Start file watcher
-    startWatcher(config.folderPath, (event) => {
-      // Send file changes to frontend
-      mainWindow.webContents.send('file-changed', event);
-    });
+  const saved = await sqlite.getConfig('appConfig');
+  if (saved) await startInfra(saved);
 
-    // Start sync every 5 minutes
-    setInterval(() => {
-      syncService.performSync();
-    }, 5 * 60 * 1000);
-  }
+  ipcMain.handle('select-folder', async () => {
+    const result = await dialog.showOpenDialog({ properties: ['openDirectory'] });
+    return result.canceled ? null : result.filePaths[0];
+  });
 
-  // IPC: Save user configuration
-  ipcMain.handle('save-config', (event, config) => {
-    configService.saveConfig(config);
+  ipcMain.handle('config:save', async (_e, config) => {
+    await sqlite.setConfig('appConfig', config);
+    await startInfra(config);
     return { success: true };
   });
 
-  // IPC: Get file list
-  ipcMain.handle('get-files', async () => {
-    const files = await sqliteService.getFilesByStatuses(['SYNCED']);
-    return files;
+  ipcMain.handle('config:load', async () => {
+    return await sqlite.getConfig('appConfig');
   });
 
-  // IPC: Manual sync
+  ipcMain.handle('get-files', async () => await sqlite.getAllFiles());
+
   ipcMain.handle('manual-sync', async () => {
-    await syncService.performSync();
-    return { success: true };
+    if (!sync) return { success: false, message: 'Sync not initialized' };
+    trayService?.setStatus('Syncing...');
+    const result = await sync.runOnce(appConfig?.userId);
+    trayService?.setStatus(result.success ? 'Up to date' : 'Error');
+    return result;
   });
 });
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+app.on('window-all-closed', async () => {
+  if (syncInterval) clearInterval(syncInterval);
+  if (watcher) await watcher.stop();
+  if (process.platform !== 'darwin') app.quit();
 });
-
-module.exports = { mainWindow };
